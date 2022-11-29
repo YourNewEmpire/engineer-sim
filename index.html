@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, 
+     user-scalable=0"
+    />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div id="score">
+      <p>
+        Score:
+        <span class="ml-1" id="scoreEl">0</span>
+      </p>
+
+      <p>
+        Highest:
+        <span class="ml-1" id="highestEl">0</span>
+      </p>
+    </div>
+
+    <div id="modelEl">
+      <div>
+        <h1 id="bigScoreEl">0</h1>
+        <p>Points</p>
+        <div>
+          <button id="startGameBtn">Start Game</button>
+        </div>
+      </div>
+    </div>
+
+    <canvas></canvas>
+    <script src="game.js"></script>
+  </body>
+</html>
