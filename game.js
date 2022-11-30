@@ -223,6 +223,8 @@ function animate() {
   });
 }
 
+// todo - create handleMouseMove Func - set state for clientY & clientX - then copy how particles spawn, but for projectiles
+
 // Shoot Enemy
 function shootEnemy(e) {
   let x = player.x;
