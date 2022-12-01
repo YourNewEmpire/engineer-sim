@@ -25,6 +25,8 @@ const bigScoreEl = document.getElementById("bigScoreEl");
 const friction = 0.98;
 let x = canvas.width / 2;
 let y = canvas.height / 2;
+let mouseX = null;
+let mouseY = null;
 let projectiles = [];
 let enemies = [];
 let myKeys = [];
@@ -33,7 +35,9 @@ let score = 0;
 let highest = localStorage.getItem("highest") || 0;
 let animationId;
 let spanEnemiesInterval;
-let spawnTime = 1000;
+let spanProjectilesInterval;
+let projectileSpawnTime = 100;
+let spawnTime = 300;
 highestEl.innerHTML = highest;
 
 // Starting Ball Class
@@ -130,7 +134,7 @@ function animate() {
 
   player.speedX = 0;
   player.speedY = 0;
-  console.log(myKeys);
+
   if (myKeys && myKeys["KeyA"] && player.x > 0) {
     player.speedX = -3;
   }
@@ -223,8 +227,10 @@ function animate() {
   });
 }
 
-// todo - create handleMouseMove Func - set state for clientY & clientX - then copy how particles spawn, but for projectiles
-
+function handleMouseMove(e) {
+  mouseX = e.clientX;
+  mouseY = e.clientY;
+}
 // Shoot Enemy
 function shootEnemy(e) {
   let x = player.x;
@@ -252,7 +258,9 @@ function init() {
 // Stop Game
 function stopGame() {
   clearInterval(spanEnemiesInterval);
+  clearInterval(spanProjectilesInterval);
   cancelAnimationFrame(animationId); // Exit Animation
+  canvas.removeEventListener("mousemove", handleMouseMove);
   canvas.removeEventListener("click", shootEnemy); // Stop Shooting
   modelEl.style.display = "flex"; // Dialogue box
   if (score > highest) {
@@ -261,6 +269,10 @@ function stopGame() {
   }
   bigScoreEl.innerHTML = score; // Poping score
 }
+
+// todo - SPAWNING ENEMIES -
+// todo - I need to spawn them at the same x+y and have them move down +5 then left -5 and so on, to imitate a bloons track I guess..
+// todo - could optionally create a random mode, where exits and spawns are random on the edges of the canvas. Static maps also
 
 // Spawning Random Enemies
 function spanEnemies() {
@@ -280,15 +292,29 @@ function spanEnemies() {
     spanEnemies();
   }, spawnTime);
 }
+function spanProjectiles() {
+  spanProjectilesInterval = setTimeout(() => {
+    let x = player.x;
+    y = player.y;
+    v = calculateVelocity(x, y, mouseX, mouseY);
+    v.x *= 5.5;
+    v.y *= 5.5;
 
+    projectiles.push(new Shooter(x, y, 5, "white", v));
+    spanProjectiles();
+  }, projectileSpawnTime);
+}
 // Start New Game
 function startGame() {
   x = canvas.width / 2;
   y = canvas.height / 2;
   canvas.addEventListener("click", shootEnemy);
+  canvas.addEventListener("mousemove", handleMouseMove);
   init();
   animate();
   clearInterval(spanEnemiesInterval);
+  clearInterval(spanProjectilesInterval);
+  spanProjectiles();
   spanEnemies();
   modelEl.style.display = "none";
 }
