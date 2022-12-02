@@ -27,6 +27,8 @@ let x = canvas.width / 2;
 let y = canvas.height / 2;
 let mouseX = null;
 let mouseY = null;
+let enemySpawnX = null;
+let enemySpawnY = null;
 let projectiles = [];
 let enemies = [];
 let myKeys = [];
@@ -317,6 +319,12 @@ function startGame() {
   spanProjectiles();
   spanEnemies();
   modelEl.style.display = "none";
+}
+
+// Start Wave
+function startWave() {
+  //? Spawn enemies at enemyY/X var.
+  //? Start a timeout
 }
 
 // Start Game Button
