@@ -16,6 +16,7 @@ window.addEventListener("keyup", function (e) {
   myKeys[e.code] = false;
 });
 // Variables & Constants
+//todo - think about how this is gonna port into useEffect
 const c = canvas.getContext("2d");
 const scoreEl = document.getElementById("scoreEl");
 const highestEl = document.getElementById("highestEl");
@@ -38,7 +39,7 @@ let highest = localStorage.getItem("highest") || 0;
 let animationId;
 let spanEnemiesInterval;
 let spanProjectilesInterval;
-let projectileSpawnTime = 100;
+let projectileSpawnTime = 500;
 let spawnTime = 300;
 highestEl.innerHTML = highest;
 
@@ -195,21 +196,23 @@ function animate() {
       // When Projectiles touch Enemy
       if (dist - enemy.radius - projectile.radius < 0) {
         // Create Particles explosion
-        for (let i = 0; i < enemy.radius * 1; i++) {
-          particles.push(
-            new Particle(
-              projectile.x,
-              projectile.y,
-              Math.random() * 3,
-              enemy.color,
-              {
-                x: (Math.random() - 0.5) * (Math.random() * 9.8 - 0.5),
-                y: (Math.random() - 0.5) * (Math.random() * 9.8 - 0.5),
-              }
-            )
-          );
-        }
+        // for (let i = 0; i < enemy.radius * 1; i++) {
+        //   particles.push(
+        //     new Particle(
+        //       projectile.x,
+        //       projectile.y,
+        //       Math.random() * 3,
+        //       enemy.color,
+        //       {
+        //         x: (Math.random() - 0.5) * (Math.random() * 9.8 - 0.5),
+        //         y: (Math.random() - 0.5) * (Math.random() * 9.8 - 0.5),
+        //       }
+        //     )
+        //   );
+        // }
 
+        // todo - add playerDmg var and use here for "8"
+        // todo - use enemy.color instead of radius for bloons idea.
         // Check if enemy is to be removed or not
         if (enemy.radius - 10 > 10) {
           updateScore();
@@ -281,7 +284,7 @@ function spanEnemies() {
   // Spawn a enemy every second
   spanEnemiesInterval = setTimeout(() => {
     let x, y;
-    const radius = Math.random() * 16 + 14;
+    const radius = 6;
     if (Math.random() < 0.5) {
       x = Math.random() < 0.5 ? 0 - radius : canvas.width + radius;
       y = Math.random() * canvas.height;
