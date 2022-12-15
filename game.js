@@ -16,11 +16,12 @@ window.addEventListener("keyup", function (e) {
   myKeys[e.code] = false;
 });
 // Variables & Constants
-//todo - think about how this is gonna port into useEffect
+
 const c = canvas.getContext("2d");
 const scoreEl = document.getElementById("scoreEl");
 const highestEl = document.getElementById("highestEl");
 const startGameBtn = document.getElementById("startGameBtn");
+const startWaveBtn = document.getElementById("startWaveBtn");
 const modelEl = document.getElementById("modelEl");
 const bigScoreEl = document.getElementById("bigScoreEl");
 const friction = 0.98;
@@ -33,7 +34,7 @@ let enemySpawnY = null;
 let projectiles = [];
 let enemies = [];
 let myKeys = [];
-let particles = [];
+let currentEnemies = 0;
 let score = 0;
 let highest = localStorage.getItem("highest") || 0;
 let animationId;
@@ -44,6 +45,7 @@ let spawnTime = 300;
 highestEl.innerHTML = highest;
 
 // Starting Ball Class
+
 class Ball {
   constructor(x, y, radius, color) {
     this.x = x;
@@ -79,34 +81,6 @@ class Shooter extends Ball {
     this.y = this.y + this.velocity.y;
   }
 }
-
-// Particle for Exploding Shooter BAll
-class Particle extends Shooter {
-  constructor(x, y, radius, color, velocity) {
-    super(x, y, radius, color, velocity);
-    this.alpha = 1;
-  }
-
-  draw() {
-    c.save();
-    c.globalAlpha = this.alpha;
-    c.beginPath();
-    c.arc(this.x, this.y, this.radius, Math.PI * 2, 0, false);
-    c.fillStyle = this.color;
-    c.fill();
-    c.restore();
-  }
-
-  update() {
-    this.draw();
-    this.velocity.x *= friction;
-    this.velocity.y *= friction;
-    this.x = this.x + this.velocity.x * 2;
-    this.y = this.y + this.velocity.y * 2;
-    this.alpha -= 0.01;
-  }
-}
-
 function updateScore(times = 1) {
   spawnTime *= 0.9995;
   score += 100 * times;
@@ -132,7 +106,7 @@ function calculateVelocity(
 // Animation
 function animate() {
   animationId = requestAnimationFrame(animate);
-  c.fillStyle = "rgba(0,0,0,0.1)";
+  c.fillStyle = "rgba(80,12,12,1)";
   c.fillRect(0, 0, canvas.width, canvas.height);
 
   player.speedX = 0;
@@ -152,16 +126,6 @@ function animate() {
   }
   player.draw();
   player.newPos();
-  // Updates and remove particles
-  particles.forEach((particle, index) => {
-    if (particle.alpha <= 0) {
-      setTimeout(() => {
-        particles.splice(index, 1);
-      }, 0);
-    } else {
-      particle.update();
-    }
-  });
 
   // Update and remove projectiles
   projectiles.forEach((projectile, index) => {
@@ -195,22 +159,6 @@ function animate() {
 
       // When Projectiles touch Enemy
       if (dist - enemy.radius - projectile.radius < 0) {
-        // Create Particles explosion
-        // for (let i = 0; i < enemy.radius * 1; i++) {
-        //   particles.push(
-        //     new Particle(
-        //       projectile.x,
-        //       projectile.y,
-        //       Math.random() * 3,
-        //       enemy.color,
-        //       {
-        //         x: (Math.random() - 0.5) * (Math.random() * 9.8 - 0.5),
-        //         y: (Math.random() - 0.5) * (Math.random() * 9.8 - 0.5),
-        //       }
-        //     )
-        //   );
-        // }
-
         // todo - add playerDmg var and use here for "8"
         // todo - use enemy.color instead of radius for bloons idea.
         // Check if enemy is to be removed or not
@@ -236,6 +184,7 @@ function handleMouseMove(e) {
   mouseX = e.clientX;
   mouseY = e.clientY;
 }
+
 // Shoot Enemy
 function shootEnemy(e) {
   let x = player.x;
@@ -252,7 +201,7 @@ function init() {
   player = new Ball(x, y, 10, "white");
   projectiles = [];
   enemies = [];
-  particles = [];
+
   score = 0;
   spawnTime = 1000;
   highestEl.innerHTML = score;
@@ -293,7 +242,12 @@ function spanEnemies() {
       y = Math.random() < 0.5 ? 0 - radius : canvas.height + radius;
     }
     const color = `hsl(${Math.floor(Math.random() * 360)}, 50%, 50%)`;
-    enemies.push(new Shooter(x, y, radius, color, calculateVelocity(x, y)));
+
+    if (currentEnemies > 0) {
+      currentEnemies--;
+      enemies.push(new Shooter(x, y, radius, color, calculateVelocity(x, y)));
+    }
+    console.log(currentEnemies);
     spanEnemies();
   }, spawnTime);
 }
@@ -305,7 +259,7 @@ function spanProjectiles() {
     v.x *= 5.5;
     v.y *= 5.5;
 
-    projectiles.push(new Shooter(x, y, 5, "white", v));
+    projectiles.push(new Shooter(x, y, 12, "white", v));
     spanProjectiles();
   }, projectileSpawnTime);
 }
@@ -313,14 +267,15 @@ function spanProjectiles() {
 function startGame() {
   x = canvas.width / 2;
   y = canvas.height / 2;
-  canvas.addEventListener("click", shootEnemy);
+
   canvas.addEventListener("mousemove", handleMouseMove);
   init();
   animate();
-  clearInterval(spanEnemiesInterval);
+
   clearInterval(spanProjectilesInterval);
+  //todo - move to startWave
   spanProjectiles();
-  spanEnemies();
+  console.log("tick");
   modelEl.style.display = "none";
 }
 
@@ -328,7 +283,15 @@ function startGame() {
 function startWave() {
   //? Spawn enemies at enemyY/X var.
   //? Start a timeout
+  if (currentEnemies > 0) {
+    return;
+  }
+  clearInterval(spanEnemiesInterval);
+  currentEnemies = 5;
+
+  spanEnemies();
 }
 
 // Start Game Button
 startGameBtn.addEventListener("click", startGame);
+startWaveBtn.addEventListener("click", startWave);
