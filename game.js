@@ -19,11 +19,12 @@ window.addEventListener("keyup", function (e) {
 
 const c = canvas.getContext("2d");
 const scoreEl = document.getElementById("scoreEl");
+const overlay = document.getElementById("overlay");
+overlay.style.display = "none";
 const highestEl = document.getElementById("highestEl");
 const startGameBtn = document.getElementById("startGameBtn");
 const startWaveBtn = document.getElementById("startWaveBtn");
 const modelEl = document.getElementById("modelEl");
-const bigScoreEl = document.getElementById("bigScoreEl");
 const friction = 0.98;
 let x = canvas.width / 2;
 let y = canvas.height / 2;
@@ -35,6 +36,7 @@ let projectiles = [];
 let enemies = [];
 let myKeys = [];
 let currentEnemies = 0;
+let currentWave = 1;
 let score = 0;
 let highest = localStorage.getItem("highest") || 0;
 let animationId;
@@ -42,6 +44,7 @@ let spanEnemiesInterval;
 let spanProjectilesInterval;
 let projectileSpawnTime = 500;
 let spawnTime = 300;
+
 highestEl.innerHTML = highest;
 
 // Starting Ball Class
@@ -82,7 +85,6 @@ class Shooter extends Ball {
   }
 }
 function updateScore(times = 1) {
-  spawnTime *= 0.9995;
   score += 100 * times;
   scoreEl.innerHTML = score;
 }
@@ -108,6 +110,11 @@ function animate() {
   animationId = requestAnimationFrame(animate);
   c.fillStyle = "rgba(80,12,12,1)";
   c.fillRect(0, 0, canvas.width, canvas.height);
+  c.beginPath();
+  c.moveTo(canvas.width / 2, 0);
+  c.lineTo(canvas.width / 2, canvas.height / 2);
+  c.lineWidth = 15;
+  c.stroke();
 
   player.speedX = 0;
   player.speedY = 0;
@@ -142,6 +149,7 @@ function animate() {
     }
   });
 
+  // TODO - The collision of enemy/player is not needed anymore, it should be collision with end
   // Update & Destroy Enemies, Create Explosions & Increase Score
   enemies.forEach((enemy, index) => {
     enemy.update();
@@ -201,7 +209,6 @@ function init() {
   player = new Ball(x, y, 10, "white");
   projectiles = [];
   enemies = [];
-
   score = 0;
   spawnTime = 1000;
   highestEl.innerHTML = score;
@@ -217,11 +224,12 @@ function stopGame() {
   canvas.removeEventListener("mousemove", handleMouseMove);
   canvas.removeEventListener("click", shootEnemy); // Stop Shooting
   modelEl.style.display = "flex"; // Dialogue box
+  overlay.style.display = "none"; // score and highest
   if (score > highest) {
     highest = score;
     localStorage.setItem("highest", highest);
   }
-  bigScoreEl.innerHTML = score; // Poping score
+  scoreEl.innerHTML = score;
 }
 
 // todo - SPAWNING ENEMIES -
@@ -247,6 +255,7 @@ function spanEnemies() {
       currentEnemies--;
       enemies.push(new Shooter(x, y, radius, color, calculateVelocity(x, y)));
     }
+
     console.log(currentEnemies);
     spanEnemies();
   }, spawnTime);
@@ -267,16 +276,15 @@ function spanProjectiles() {
 function startGame() {
   x = canvas.width / 2;
   y = canvas.height / 2;
-
   canvas.addEventListener("mousemove", handleMouseMove);
   init();
   animate();
-
   clearInterval(spanProjectilesInterval);
-  //todo - move to startWave
+  //todo - move spanProjectiles to startWave
   spanProjectiles();
   console.log("tick");
   modelEl.style.display = "none";
+  overlay.style.display = "flex";
 }
 
 // Start Wave
@@ -286,6 +294,7 @@ function startWave() {
   if (currentEnemies > 0) {
     return;
   }
+  currentWave++;
   clearInterval(spanEnemiesInterval);
   currentEnemies = 5;
 

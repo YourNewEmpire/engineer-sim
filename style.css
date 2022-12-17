@@ -4,7 +4,7 @@
       padding: 0;
       font-family: Arial, Helvetica, sans-serif;
       line-height: 1;
-    }
+  }
 
     body {
       color: #333333;
@@ -12,7 +12,7 @@
 
     }
 
-    #score {
+    #overlay {
       position: fixed;
       color: white;
       font-size: 13px;
@@ -21,7 +21,7 @@
       z-index: 99;
     }
 
-    #score p {
+    #overlay p {
       display: inline-block;
       margin-right: 10px;
     }
@@ -46,6 +46,7 @@
     }
 
     #modelEl > div {
+      border-radius: 0.5rem;
       width: 100%;
       max-width: 350px;
       padding: 1.5em;
@@ -61,9 +62,13 @@
       font-size: 14px;
     }
 
+    #warning {
+      margin-top: 1.5em;
+    }
+
     #modelEl button {
       width: 100%;
-      margin-top: 1.5em;
+    
       border: none;
       color: white;
       cursor: pointer;
@@ -82,5 +87,5 @@
       height: 100%;
       overflow: hidden;
       border: 1px solid #d3d3d3;
-      background-color: #f1f1f1;
+      background-color: #aaa;
     } 

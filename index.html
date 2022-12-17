@@ -9,7 +9,7 @@
     <link rel="stylesheet" href="style.css" />
   </head>
   <body>
-    <div id="score">
+    <div id="overlay">
       <p>
         Score:
         <span class="ml-1" id="scoreEl">0</span>
@@ -24,11 +24,13 @@
 
     <div id="modelEl">
       <div>
-        <h1 id="bigScoreEl">0</h1>
-        <p>Points</p>
         <div>
           <button id="startGameBtn">Start Game</button>
         </div>
+        <p id="warning">
+          If you resize the window, the game will stop. This includes, pressing
+          f12 for example.
+        </p>
       </div>
     </div>
 
