@@ -3,6 +3,7 @@ const canvas = document.querySelector("canvas");
 canvas.width = innerWidth;
 canvas.height = innerHeight;
 
+// window listeners
 window.addEventListener("resize", () => {
   canvas.width = innerWidth;
   canvas.height = innerHeight;
@@ -25,7 +26,6 @@ const highestEl = document.getElementById("highestEl");
 const startGameBtn = document.getElementById("startGameBtn");
 const startWaveBtn = document.getElementById("startWaveBtn");
 const modelEl = document.getElementById("modelEl");
-const friction = 0.98;
 let x = canvas.width / 2;
 let y = canvas.height / 2;
 let mouseX = null;
@@ -88,7 +88,7 @@ function updateScore(times = 1) {
   score += 100 * times;
   scoreEl.innerHTML = score;
 }
-
+// TODO - This needs to be replaced/refactored for enemies following bloons track
 // Calculate Velocity from center(x, y) to (x1,y1)
 function calculateVelocity(
   x,
@@ -110,15 +110,20 @@ function animate() {
   animationId = requestAnimationFrame(animate);
   c.fillStyle = "rgba(80,12,12,1)";
   c.fillRect(0, 0, canvas.width, canvas.height);
+  //? test line
   c.beginPath();
-  c.moveTo(canvas.width / 2, 0);
+  c.moveTo(canvas.width / 1.5, -5);
   c.lineTo(canvas.width / 2, canvas.height / 2);
-  c.lineWidth = 15;
+  c.lineTo(canvas.width / 2, 30);
+  c.lineTo(canvas.width / 2.5, canvas.height / 2);
+
+  c.lineWidth = 30;
   c.stroke();
 
   player.speedX = 0;
   player.speedY = 0;
 
+  // Update player position after checking for keys inputted.
   if (myKeys && myKeys["KeyA"] && player.x > 0) {
     player.speedX = -3;
   }
@@ -260,6 +265,8 @@ function spanEnemies() {
     spanEnemies();
   }, spawnTime);
 }
+
+//Spawning projectiles
 function spanProjectiles() {
   spanProjectilesInterval = setTimeout(() => {
     let x = player.x;
@@ -272,6 +279,7 @@ function spanProjectiles() {
     spanProjectiles();
   }, projectileSpawnTime);
 }
+
 // Start New Game
 function startGame() {
   x = canvas.width / 2;
