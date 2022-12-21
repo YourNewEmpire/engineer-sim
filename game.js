@@ -30,8 +30,14 @@ let x = canvas.width / 2;
 let y = canvas.height / 2;
 let mouseX = null;
 let mouseY = null;
-let enemySpawnX = null;
-let enemySpawnY = null;
+let enemySpawnX = canvas.width / 1.5;
+let enemySpawnY = 0;
+let trackPoints = [
+  { x: canvas.width / 2, y: canvas.height / 2 },
+  { x: canvas.width / 2, y: 30 },
+  { x: canvas.width / 2.5, y: canvas.height / 2 },
+];
+
 let projectiles = [];
 let enemies = [];
 let myKeys = [];
@@ -76,6 +82,7 @@ class Shooter extends Ball {
   constructor(x, y, radius, color, velocity) {
     super(x, y, radius, color);
     this.velocity = velocity;
+    this.trackPoint = 0;
   }
 
   update() {
@@ -112,12 +119,12 @@ function animate() {
   c.fillRect(0, 0, canvas.width, canvas.height);
   //? test line
   c.beginPath();
-  c.moveTo(canvas.width / 1.5, -5);
-  c.lineTo(canvas.width / 2, canvas.height / 2);
-  c.lineTo(canvas.width / 2, 30);
-  c.lineTo(canvas.width / 2.5, canvas.height / 2);
+  c.moveTo(enemySpawnX, enemySpawnY);
+  c.lineTo(trackPoints[0].x, trackPoints[0].y);
+  c.lineTo(trackPoints[1].x, trackPoints[1].y);
+  c.lineTo(trackPoints[2].x, trackPoints[2].y);
 
-  c.lineWidth = 30;
+  c.lineWidth = 35;
   c.stroke();
 
   player.speedX = 0;
@@ -159,12 +166,32 @@ function animate() {
   enemies.forEach((enemy, index) => {
     enemy.update();
 
-    // Calculate distance between player(player.x, player.y) and enemy(enemy.x, enemy.y) using Math.hypot(perpendicular, base) which gives hypotenuse / distance between them
-    const dist = Math.hypot(player.x - enemy.x, player.y - enemy.y);
+    const dist = Math.hypot(
+      enemy.x - trackPoints[enemy.trackPoint].x,
+      enemy.y - trackPoints[enemy.trackPoint].y
+    );
 
-    // Checking if player and enemy is collided
-    if (dist - enemy.radius - player.radius < 1) {
-      stopGame();
+    const endDist = Math.hypot(
+      enemy.x - trackPoints[trackPoints.length - 1].x,
+
+      enemy.y - trackPoints[trackPoints.length - 1].y
+    );
+    if (endDist - enemy.radius < 0) {
+      console.log("end");
+      enemy.radius = 0;
+      enemies.splice(index, 1);
+    }
+
+    if (dist - enemy.radius < 0) {
+      // calc dist from next track point
+      enemy.velocity = calculateVelocity(
+        trackPoints[enemy.trackPoint].x,
+        trackPoints[enemy.trackPoint].y,
+        trackPoints[enemy.trackPoint + 1].x,
+        trackPoints[enemy.trackPoint + 1].y
+      );
+      enemy.trackPoint++;
+      console.log("point reached" + enemy.trackPoint);
     }
 
     projectiles.forEach((projectile, projectileIndex) => {
@@ -193,20 +220,10 @@ function animate() {
   });
 }
 
+//? to set mouse position state. Passed to a canvas event listener for mousemove.
 function handleMouseMove(e) {
   mouseX = e.clientX;
   mouseY = e.clientY;
-}
-
-// Shoot Enemy
-function shootEnemy(e) {
-  let x = player.x;
-  y = player.y;
-  v = calculateVelocity(x, y, e.clientX, e.clientY);
-  v.x *= 5.5;
-  v.y *= 5.5;
-
-  projectiles.push(new Shooter(x, y, 5, "white", v));
 }
 
 // Reinitializing Variables for Starting a New Game
@@ -227,7 +244,6 @@ function stopGame() {
   clearInterval(spanProjectilesInterval);
   cancelAnimationFrame(animationId); // Exit Animation
   canvas.removeEventListener("mousemove", handleMouseMove);
-  canvas.removeEventListener("click", shootEnemy); // Stop Shooting
   modelEl.style.display = "flex"; // Dialogue box
   overlay.style.display = "none"; // score and highest
   if (score > highest) {
@@ -245,23 +261,27 @@ function stopGame() {
 function spanEnemies() {
   // Spawn a enemy every second
   spanEnemiesInterval = setTimeout(() => {
-    let x, y;
     const radius = 6;
-    if (Math.random() < 0.5) {
-      x = Math.random() < 0.5 ? 0 - radius : canvas.width + radius;
-      y = Math.random() * canvas.height;
-    } else {
-      x = Math.random() * canvas.width;
-      y = Math.random() < 0.5 ? 0 - radius : canvas.height + radius;
-    }
+
     const color = `hsl(${Math.floor(Math.random() * 360)}, 50%, 50%)`;
 
     if (currentEnemies > 0) {
       currentEnemies--;
-      enemies.push(new Shooter(x, y, radius, color, calculateVelocity(x, y)));
+      enemies.push(
+        new Shooter(
+          enemySpawnX,
+          enemySpawnY,
+          radius,
+          color,
+          calculateVelocity(
+            enemySpawnX,
+            enemySpawnY,
+            trackPoints[0].x,
+            trackPoints[0].y
+          )
+        )
+      );
     }
-
-    console.log(currentEnemies);
     spanEnemies();
   }, spawnTime);
 }
@@ -288,23 +308,23 @@ function startGame() {
   init();
   animate();
   clearInterval(spanProjectilesInterval);
-  //todo - move spanProjectiles to startWave
   spanProjectiles();
-  console.log("tick");
+
+  //todo - move spanProjectiles to startWave
+
   modelEl.style.display = "none";
   overlay.style.display = "flex";
 }
 
 // Start Wave
 function startWave() {
-  //? Spawn enemies at enemyY/X var.
-  //? Start a timeout
+  //? return so that this code cannot be ran when there are still current enemies
   if (currentEnemies > 0) {
     return;
   }
   currentWave++;
   clearInterval(spanEnemiesInterval);
-  currentEnemies = 5;
+  currentEnemies = 1;
 
   spanEnemies();
 }
