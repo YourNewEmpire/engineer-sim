@@ -2,7 +2,6 @@
 const canvas = document.querySelector("canvas");
 canvas.width = innerWidth;
 canvas.height = innerHeight;
-
 // window listeners
 window.addEventListener("resize", () => {
   canvas.width = innerWidth;
@@ -32,23 +31,98 @@ let mouseX = null;
 let mouseY = null;
 let enemySpawnX = canvas.width / 1.5;
 let enemySpawnY = 0;
-let trackPoints = [
+const trackPoints = [
   { x: canvas.width / 2, y: canvas.height / 2 },
   { x: canvas.width / 2, y: 30 },
-  { x: canvas.width / 2.5, y: canvas.height / 2 },
+  { x: canvas.width / 0.5, y: canvas.height / 0.25 },
+];
+const waveEnemies = [
+  {
+    spawnTime: 300,
+
+    enemies: [
+      "red",
+      "red",
+      "red",
+      "red",
+      "red",
+      "red",
+      "red",
+      "red",
+      "red",
+      "red",
+    ],
+  },
+  {
+    spawnTime: 150,
+
+    enemies: [
+      "red",
+      "red",
+      "red",
+      "red",
+      "red",
+      "red",
+      "red",
+      "red",
+      "red",
+      "red",
+      "blue",
+      "blue",
+      "blue",
+      "blue",
+      "blue",
+    ],
+  },
+  {
+    spawnTime: 30,
+
+    enemies: [
+      "red",
+      "red",
+      "red",
+      "red",
+      "red",
+      "red",
+      "red",
+      "red",
+      "red",
+      "red",
+      "red",
+      "red",
+      "red",
+      "red",
+      "red",
+      "red",
+      "red",
+      "red",
+      "red",
+      "red",
+      "blue",
+      "blue",
+      "blue",
+      "blue",
+      "blue",
+      "blue",
+      "blue",
+      "blue",
+      "blue",
+      "blue",
+    ],
+  },
 ];
 
 let projectiles = [];
 let enemies = [];
 let myKeys = [];
 let currentEnemies = 0;
-let currentWave = 1;
+let currentWave = 0;
 let score = 0;
 let highest = localStorage.getItem("highest") || 0;
 let animationId;
-let spanEnemiesInterval;
-let spanProjectilesInterval;
-let projectileSpawnTime = 500;
+let spawnEnemiesInterval;
+let spawnProjectilesInterval;
+let projectileSpawnTime = 800;
 let spawnTime = 300;
 
 highestEl.innerHTML = highest;
@@ -110,6 +184,79 @@ function calculateVelocity(
   };
 
   return velocity;
+}
+//? to set mouse position state. Passed to a canvas event listener for mousemove.
+function handleMouseMove(e) {
+  mouseX = e.clientX;
+  mouseY = e.clientY;
+}
+
+// Reinitializing Variables for Starting a New Game
+function init() {
+  player = new Ball(x, y, 10, "white");
+  projectiles = [];
+  enemies = [];
+  score = 0;
+  spawnTime = 1000;
+  highestEl.innerHTML = score;
+  scoreEl.innerHTML = score;
+  highestEl.innerHTML = highest;
+}
+
+// Stop Game
+function stopGame() {
+  clearInterval(spawnEnemiesInterval);
+  clearInterval(spawnProjectilesInterval);
+  cancelAnimationFrame(animationId); // Exit Animation
+  canvas.removeEventListener("mousemove", handleMouseMove);
+  modelEl.style.display = "flex"; // Dialogue box
+  overlay.style.display = "none"; // score and highest
+  if (score > highest) {
+    highest = score;
+    localStorage.setItem("highest", highest);
+  }
+  scoreEl.innerHTML = score;
+}
+
+// Spawning Random Enemies
+function spawnEnemies() {
+  // Spawn a enemy every second
+  spawnEnemiesInterval = setTimeout(() => {
+    const radius = 10;
+
+    if (currentEnemies > 0) {
+      enemies.push(
+        new Shooter(
+          enemySpawnX,
+          enemySpawnY,
+          radius,
+          waveEnemies[currentWave - 1].enemies[currentEnemies - 1],
+          calculateVelocity(
+            enemySpawnX,
+            enemySpawnY,
+            trackPoints[0].x,
+            trackPoints[0].y
+          )
+        )
+      );
+      currentEnemies--;
+    }
+    spawnEnemies();
+  }, spawnTime);
+}
+
+//Spawning projectiles
+function spawnProjectiles() {
+  spawnProjectilesInterval = setTimeout(() => {
+    let x = player.x;
+    y = player.y;
+    v = calculateVelocity(x, y, mouseX, mouseY);
+    v.x *= 5.5;
+    v.y *= 5.5;
+
+    projectiles.push(new Shooter(x, y, 4, "white", v));
+    spawnProjectiles();
+  }, projectileSpawnTime);
 }
 
 // Animation
@@ -220,86 +367,6 @@ function animate() {
   });
 }
 
-//? to set mouse position state. Passed to a canvas event listener for mousemove.
-function handleMouseMove(e) {
-  mouseX = e.clientX;
-  mouseY = e.clientY;
-}
-
-// Reinitializing Variables for Starting a New Game
-function init() {
-  player = new Ball(x, y, 10, "white");
-  projectiles = [];
-  enemies = [];
-  score = 0;
-  spawnTime = 1000;
-  highestEl.innerHTML = score;
-  scoreEl.innerHTML = score;
-  highestEl.innerHTML = highest;
-}
-
-// Stop Game
-function stopGame() {
-  clearInterval(spanEnemiesInterval);
-  clearInterval(spanProjectilesInterval);
-  cancelAnimationFrame(animationId); // Exit Animation
-  canvas.removeEventListener("mousemove", handleMouseMove);
-  modelEl.style.display = "flex"; // Dialogue box
-  overlay.style.display = "none"; // score and highest
-  if (score > highest) {
-    highest = score;
-    localStorage.setItem("highest", highest);
-  }
-  scoreEl.innerHTML = score;
-}
-
-// todo - SPAWNING ENEMIES -
-// todo - I need to spawn them at the same x+y and have them move down +5 then left -5 and so on, to imitate a bloons track I guess..
-// todo - could optionally create a random mode, where exits and spawns are random on the edges of the canvas. Static maps also
-
-// Spawning Random Enemies
-function spanEnemies() {
-  // Spawn a enemy every second
-  spanEnemiesInterval = setTimeout(() => {
-    const radius = 6;
-
-    const color = `hsl(${Math.floor(Math.random() * 360)}, 50%, 50%)`;
-
-    if (currentEnemies > 0) {
-      currentEnemies--;
-      enemies.push(
-        new Shooter(
-          enemySpawnX,
-          enemySpawnY,
-          radius,
-          color,
-          calculateVelocity(
-            enemySpawnX,
-            enemySpawnY,
-            trackPoints[0].x,
-            trackPoints[0].y
-          )
-        )
-      );
-    }
-    spanEnemies();
-  }, spawnTime);
-}
-
-//Spawning projectiles
-function spanProjectiles() {
-  spanProjectilesInterval = setTimeout(() => {
-    let x = player.x;
-    y = player.y;
-    v = calculateVelocity(x, y, mouseX, mouseY);
-    v.x *= 5.5;
-    v.y *= 5.5;
-
-    projectiles.push(new Shooter(x, y, 12, "white", v));
-    spanProjectiles();
-  }, projectileSpawnTime);
-}
-
 // Start New Game
 function startGame() {
   x = canvas.width / 2;
@@ -307,11 +374,11 @@ function startGame() {
   canvas.addEventListener("mousemove", handleMouseMove);
   init();
   animate();
-  clearInterval(spanProjectilesInterval);
-  spanProjectiles();
+  clearInterval(spawnProjectilesInterval);
+  spawnProjectiles();
 
-  //todo - move spanProjectiles to startWave
-
+  //todo - move spawnProjectiles to startWave
+  //todo - add ability to place hero
   modelEl.style.display = "none";
   overlay.style.display = "flex";
 }
@@ -322,11 +389,12 @@ function startWave() {
   if (currentEnemies > 0) {
     return;
   }
+  //? increment currentWave state and rest enemy spawn interval
   currentWave++;
-  clearInterval(spanEnemiesInterval);
-  currentEnemies = 1;
-
-  spanEnemies();
+  clearInterval(spawnEnemiesInterval);
+  currentEnemies = waveEnemies[currentWave - 1].enemies.length;
+  console.log(currentEnemies);
+  spawnEnemies();
 }
 
 // Start Game Button
