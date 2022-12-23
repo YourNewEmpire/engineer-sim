@@ -1,4 +1,5 @@
-// Selecting Canvas
+import { calculateVelocity } from "./lib/velocity.js";
+//? Selecting Canvas and setting width and height
 const canvas = document.querySelector("canvas");
 canvas.width = innerWidth;
 canvas.height = innerHeight;
@@ -16,42 +17,53 @@ window.addEventListener("keyup", function (e) {
   myKeys[e.code] = false;
 });
 // Variables & Constants
-
+const bloonsHealth = [
+  {
+    health: 1,
+    color: "red",
+  },
+  {
+    health: 2,
+    color: "blue",
+  },
+  {
+    health: 3,
+    color: "green",
+  },
+  {
+    health: 6,
+    color: "pink",
+    childs: {
+      red: 1,
+    },
+  },
+];
+const bloonHealth = {
+  red: 1,
+  blue: 2,
+  green: 3,
+  rainbow: 6,
+};
 const c = canvas.getContext("2d");
 const scoreEl = document.getElementById("scoreEl");
 const overlay = document.getElementById("overlay");
 overlay.style.display = "none";
 const highestEl = document.getElementById("highestEl");
+const healthEl = document.getElementById("healthEl");
 const startGameBtn = document.getElementById("startGameBtn");
 const startWaveBtn = document.getElementById("startWaveBtn");
+const selectHeroBtn = document.getElementById("selectHeroBtn");
 const modelEl = document.getElementById("modelEl");
-let x = canvas.width / 2;
-let y = canvas.height / 2;
-let mouseX = null;
-let mouseY = null;
-let enemySpawnX = canvas.width / 1.5;
-let enemySpawnY = 0;
 const trackPoints = [
   { x: canvas.width / 2, y: canvas.height / 2 },
   { x: canvas.width / 2, y: 30 },
-  { x: canvas.width / 0.5, y: canvas.height / 0.25 },
+  { x: 950, y: 600 },
 ];
 const waveEnemies = [
   {
     spawnTime: 300,
 
-    enemies: [
-      "red",
-      "red",
-      "red",
-      "red",
-      "red",
-      "red",
-      "red",
-      "red",
-      "red",
-      "red",
-    ],
+    enemies: ["blue"],
   },
   {
     spawnTime: 150,
@@ -112,9 +124,22 @@ const waveEnemies = [
   },
 ];
 
+let x = canvas.width / 2;
+let y = canvas.height / 2;
+let player;
+let playerDmg = 1;
+let hero;
+let health = 10;
+let heroSelect = false;
+let mouseX = null;
+let mouseY = null;
+let enemySpawnX = canvas.width / 1.5;
+let enemySpawnY = 0;
+
 let projectiles = [];
 let enemies = [];
 let myKeys = [];
+let enemiesToSpawn = 0;
 let currentEnemies = 0;
 let currentWave = 0;
 let score = 0;
@@ -126,6 +151,7 @@ let projectileSpawnTime = 800;
 let spawnTime = 300;
 
 highestEl.innerHTML = highest;
+healthEl.innerHTML = health;
 
 // Starting Ball Class
 
@@ -157,6 +183,7 @@ class Shooter extends Ball {
     super(x, y, radius, color);
     this.velocity = velocity;
     this.trackPoint = 0;
+    this.health = bloonHealth[color];
   }
 
   update() {
@@ -165,32 +192,22 @@ class Shooter extends Ball {
     this.y = this.y + this.velocity.y;
   }
 }
-function updateScore(times = 1) {
-  score += 100 * times;
-  scoreEl.innerHTML = score;
-}
-// TODO - This needs to be replaced/refactored for enemies following bloons track
-// Calculate Velocity from center(x, y) to (x1,y1)
-function calculateVelocity(
-  x,
-  y,
-  x1 = canvas.width / 2,
-  y1 = canvas.height / 2
-) {
-  const angle = Math.atan2(y1 - y, x1 - x);
-  const velocity = {
-    x: Math.cos(angle),
-    y: Math.sin(angle),
-  };
 
-  return velocity;
-}
 //? to set mouse position state. Passed to a canvas event listener for mousemove.
 function handleMouseMove(e) {
   mouseX = e.clientX;
   mouseY = e.clientY;
+  if (heroSelect) {
+    hero.x = e.clientX;
+    hero.y = e.clientY;
+  }
 }
 
+//todo - rework  how scoring works in the game
+function updateScore(times = 1) {
+  score += 100 * times;
+  scoreEl.innerHTML = score;
+}
 // Reinitializing Variables for Starting a New Game
 function init() {
   player = new Ball(x, y, 10, "white");
@@ -218,13 +235,13 @@ function stopGame() {
   scoreEl.innerHTML = score;
 }
 
-// Spawning Random Enemies
+//? Spawns enemies at start of track
 function spawnEnemies() {
-  // Spawn a enemy every second
+  //? Spawn a enemy every spawnTime
   spawnEnemiesInterval = setTimeout(() => {
     const radius = 10;
 
-    if (currentEnemies > 0) {
+    if (enemiesToSpawn > 0) {
       enemies.push(
         new Shooter(
           enemySpawnX,
@@ -239,28 +256,35 @@ function spawnEnemies() {
           )
         )
       );
-      currentEnemies--;
+      enemiesToSpawn--;
+      console.log(enemiesToSpawn);
+    } else {
+      console.log("still running");
     }
     spawnEnemies();
   }, spawnTime);
 }
-
-//Spawning projectiles
+function endWave() {
+  clearInterval(spawnEnemiesInterval);
+}
+//? Shooting projectiles from player to direction of mouse pos
 function spawnProjectiles() {
   spawnProjectilesInterval = setTimeout(() => {
     let x = player.x;
     y = player.y;
-    v = calculateVelocity(x, y, mouseX, mouseY);
+    let v = calculateVelocity(player.x, player.y, mouseX, mouseY);
     v.x *= 5.5;
     v.y *= 5.5;
 
-    projectiles.push(new Shooter(x, y, 4, "white", v));
+    projectiles.push(new Shooter(x, y, 4, "rgba(150,150,150,1)", v));
     spawnProjectiles();
   }, projectileSpawnTime);
 }
 
-// Animation
+//? Recursive animate func
 function animate() {
+  healthEl.innerHTML = health;
+
   animationId = requestAnimationFrame(animate);
   c.fillStyle = "rgba(80,12,12,1)";
   c.fillRect(0, 0, canvas.width, canvas.height);
@@ -293,6 +317,9 @@ function animate() {
   player.draw();
   player.newPos();
 
+  if (hero) {
+    hero.draw();
+  }
   // Update and remove projectiles
   projectiles.forEach((projectile, index) => {
     projectile.update();
@@ -309,7 +336,6 @@ function animate() {
   });
 
   // TODO - The collision of enemy/player is not needed anymore, it should be collision with end
-  // Update & Destroy Enemies, Create Explosions & Increase Score
   enemies.forEach((enemy, index) => {
     enemy.update();
 
@@ -320,12 +346,15 @@ function animate() {
 
     const endDist = Math.hypot(
       enemy.x - trackPoints[trackPoints.length - 1].x,
-
       enemy.y - trackPoints[trackPoints.length - 1].y
     );
     if (endDist - enemy.radius < 0) {
       console.log("end");
       enemy.radius = 0;
+      let dmg = bloonHealth[enemy.color];
+      health -= dmg;
+      currentEnemies--;
+      console.log(currentEnemies);
       enemies.splice(index, 1);
     }
 
@@ -338,27 +367,32 @@ function animate() {
         trackPoints[enemy.trackPoint + 1].y
       );
       enemy.trackPoint++;
-      console.log("point reached" + enemy.trackPoint);
     }
 
     projectiles.forEach((projectile, projectileIndex) => {
       const dist = Math.hypot(projectile.x - enemy.x, projectile.y - enemy.y);
 
-      // When Projectiles touch Enemy
+      //? When Projectiles touch Enemy
       if (dist - enemy.radius - projectile.radius < 0) {
         // todo - add playerDmg var and use here for "8"
         // todo - use enemy.color instead of radius for bloons idea.
         // Check if enemy is to be removed or not
-        if (enemy.radius - 10 > 10) {
+        let allColors = Object.keys(bloonHealth);
+
+        if (enemy.health - playerDmg > 0) {
+          // todo - pass enemy and index to handleEnemyHit: if allColors[enemy.health] === "rainbow" {enemies.splice(index, 1); draw enemies around its pos;}
           updateScore();
-          enemy.radius -= 8;
+          enemy.health -= playerDmg;
+          enemy.color = allColors[enemy.health - 1];
           setTimeout(() => {
             projectiles.splice(projectileIndex, 1);
           }, 0);
         } else {
+          //handle enemy kill
           updateScore(2.5);
           setTimeout(() => {
             enemies.splice(index, 1);
+            currentEnemies--;
             projectiles.splice(projectileIndex, 1);
           }, 0);
         }
@@ -367,7 +401,7 @@ function animate() {
   });
 }
 
-// Start New Game
+//? Start New Game
 function startGame() {
   x = canvas.width / 2;
   y = canvas.height / 2;
@@ -375,28 +409,48 @@ function startGame() {
   init();
   animate();
   clearInterval(spawnProjectilesInterval);
-  spawnProjectiles();
 
-  //todo - move spawnProjectiles to startWave
-  //todo - add ability to place hero
   modelEl.style.display = "none";
   overlay.style.display = "flex";
 }
 
-// Start Wave
+//? Start Wave
 function startWave() {
   //? return so that this code cannot be ran when there are still current enemies
   if (currentEnemies > 0) {
     return;
   }
-  //? increment currentWave state and rest enemy spawn interval
+
+  //? increment currentWave state and reset enemy spawn interval
   currentWave++;
   clearInterval(spawnEnemiesInterval);
+  clearInterval(spawnProjectilesInterval);
   currentEnemies = waveEnemies[currentWave - 1].enemies.length;
+  enemiesToSpawn = waveEnemies[currentWave - 1].enemies.length;
   console.log(currentEnemies);
   spawnEnemies();
+  spawnProjectiles();
 }
 
-// Start Game Button
+//todo - use for towerSelected when adding towers
+function heroSelected() {
+  //set heroSelect true
+  if (hero) {
+    return;
+  }
+  heroSelect = true;
+  hero = new Ball(mouseX, mouseY, 10, "white");
+  canvas.addEventListener("click", heroPlaced);
+}
+function heroPlaced(e) {
+  hero.x = e.clientX;
+  hero.y = e.clientY;
+  heroSelect = false;
+
+  canvas.removeEventListener("click", heroPlaced);
+}
+
+//? Start Game Button
 startGameBtn.addEventListener("click", startGame);
 startWaveBtn.addEventListener("click", startWave);
+selectHeroBtn.addEventListener("click", heroSelected);
