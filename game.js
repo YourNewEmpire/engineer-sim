@@ -1,4 +1,5 @@
 import { calculateVelocity } from "./lib/velocity.js";
+import { waveEnemies } from "./lib/constants.js";
 //? Selecting Canvas and setting width and height
 const canvas = document.querySelector("canvas");
 canvas.width = innerWidth;
@@ -59,70 +60,6 @@ const trackPoints = [
   { x: canvas.width / 2, y: 30 },
   { x: 950, y: 600 },
 ];
-const waveEnemies = [
-  {
-    spawnTime: 300,
-
-    enemies: ["blue"],
-  },
-  {
-    spawnTime: 150,
-
-    enemies: [
-      "red",
-      "red",
-      "red",
-      "red",
-      "red",
-      "red",
-      "red",
-      "red",
-      "red",
-      "red",
-      "blue",
-      "blue",
-      "blue",
-      "blue",
-      "blue",
-    ],
-  },
-  {
-    spawnTime: 30,
-
-    enemies: [
-      "red",
-      "red",
-      "red",
-      "red",
-      "red",
-      "red",
-      "red",
-      "red",
-      "red",
-      "red",
-      "red",
-      "red",
-      "red",
-      "red",
-      "red",
-      "red",
-      "red",
-      "red",
-      "red",
-      "red",
-      "blue",
-      "blue",
-      "blue",
-      "blue",
-      "blue",
-      "blue",
-      "blue",
-      "blue",
-      "blue",
-      "blue",
-    ],
-  },
-];
 
 let x = canvas.width / 2;
 let y = canvas.height / 2;
@@ -135,7 +72,6 @@ let mouseX = null;
 let mouseY = null;
 let enemySpawnX = canvas.width / 1.5;
 let enemySpawnY = 0;
-
 let projectiles = [];
 let enemies = [];
 let myKeys = [];
@@ -147,7 +83,7 @@ let highest = localStorage.getItem("highest") || 0;
 let animationId;
 let spawnEnemiesInterval;
 let spawnProjectilesInterval;
-let projectileSpawnTime = 800;
+let projectileSpawnTime = 300;
 let spawnTime = 300;
 
 highestEl.innerHTML = highest;
@@ -192,7 +128,12 @@ class Shooter extends Ball {
     this.y = this.y + this.velocity.y;
   }
 }
-
+function getRandomInt(max) {
+  return Math.floor(Math.random() * max);
+}
+function getRandomArbitrary(min, max) {
+  return Math.random() * (max - min) + min;
+}
 //? to set mouse position state. Passed to a canvas event listener for mousemove.
 function handleMouseMove(e) {
   mouseX = e.clientX;
@@ -264,19 +205,25 @@ function spawnEnemies() {
     spawnEnemies();
   }, spawnTime);
 }
-function endWave() {
-  clearInterval(spawnEnemiesInterval);
-}
+
 //? Shooting projectiles from player to direction of mouse pos
 function spawnProjectiles() {
   spawnProjectilesInterval = setTimeout(() => {
+    let rand = getRandomArbitrary(-25, 25);
+    let rand2 = getRandomArbitrary(-25, 25);
+
     let x = player.x;
     y = player.y;
-    let v = calculateVelocity(player.x, player.y, mouseX, mouseY);
+    let v = calculateVelocity(
+      player.x,
+      player.y,
+      mouseX + rand,
+      mouseY + rand2
+    );
     v.x *= 5.5;
     v.y *= 5.5;
 
-    projectiles.push(new Shooter(x, y, 4, "rgba(150,150,150,1)", v));
+    projectiles.push(new Shooter(x, y, 5, "rgba(150,150,150,1)", v));
     spawnProjectiles();
   }, projectileSpawnTime);
 }
