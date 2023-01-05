@@ -80,6 +80,7 @@ let mouseY = null;
 let enemySpawnX = canvas.width / 1.5;
 let enemySpawnY = 0;
 let projectiles = [];
+let towerSpaces = [];
 let enemies = [];
 let myKeys = [];
 let enemiesToSpawn = 0;
@@ -161,6 +162,7 @@ function getRandomArbitrary(min, max) {
 function handleMouseMove(e) {
   mouseX = e.clientX;
   mouseY = e.clientY;
+
   if (heroSelect) {
     hero.x = e.clientX;
     hero.y = e.clientY;
@@ -231,10 +233,12 @@ function spawnEnemies() {
 
 //? Shooting projectiles from player to direction of mouse pos
 function spawnProjectiles() {
+  const dist = Math.hypot(mouseX - player.x, mouseY - player.y);
+  let rand = getRandomArbitrary(0 - dist / 10, 0 + dist / 10);
   spawnProjectilesInterval = setTimeout(() => {
     let x = player.x;
     let y = player.y;
-    let v = calculateVelocity(player.x, player.y, mouseX, mouseY);
+    let v = calculateVelocity(player.x, player.y, mouseX + rand, mouseY + rand);
     v.x *= 5.5;
     v.y *= 5.5;
 
