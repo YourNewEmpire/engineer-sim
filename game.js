@@ -2,6 +2,7 @@ import { calculateVelocity } from "./lib/velocity.js";
 import { waveEnemies } from "./lib/constants.js";
 //? Selecting Canvas and setting width and height
 const canvas = document.querySelector("canvas");
+
 canvas.width = innerWidth;
 canvas.height = innerHeight;
 // window listeners
@@ -26,16 +27,22 @@ const bloonsHealth = [
   {
     health: 2,
     color: "blue",
+    childs: {
+      red: 1,
+    },
   },
   {
     health: 3,
     color: "green",
+    childs: {
+      blue: 1,
+    },
   },
   {
     health: 6,
     color: "pink",
     childs: {
-      red: 1,
+      green: 1,
     },
   },
 ];
@@ -76,7 +83,7 @@ let projectiles = [];
 let enemies = [];
 let myKeys = [];
 let enemiesToSpawn = 0;
-let currentEnemies = 0;
+let totalEnemies = 0;
 let currentWave = 0;
 let score = 0;
 let highest = localStorage.getItem("highest") || 0;
@@ -90,7 +97,7 @@ highestEl.innerHTML = highest;
 healthEl.innerHTML = health;
 
 // Starting Ball Class
-
+//todo - add stuff to properties like fire damage, explosive, whatever then compare when projectiles hit
 class Ball {
   constructor(x, y, radius, color) {
     this.x = x;
@@ -99,6 +106,7 @@ class Ball {
     this.color = color;
     this.speedX = 0;
     this.speedY = 0;
+    this.properties = {};
   }
 
   draw() {
@@ -113,8 +121,23 @@ class Ball {
   }
 }
 
+// todo - rename and add constructor params for color, health, speed other properties etc
 // Shooter Ball for Moving Ball
 class Shooter extends Ball {
+  constructor(x, y, radius, color, velocity) {
+    super(x, y, radius, color);
+    this.velocity = velocity;
+    this.trackPoint = 0;
+    this.health = bloonHealth[color];
+  }
+
+  update() {
+    this.draw();
+    this.x = this.x + this.velocity.x;
+    this.y = this.y + this.velocity.y;
+  }
+}
+class Piece extends Ball {
   constructor(x, y, radius, color, velocity) {
     super(x, y, radius, color);
     this.velocity = velocity;
@@ -188,7 +211,7 @@ function spawnEnemies() {
           enemySpawnX,
           enemySpawnY,
           radius,
-          waveEnemies[currentWave - 1].enemies[currentEnemies - 1],
+          waveEnemies[currentWave - 1].enemies[totalEnemies - 1],
           calculateVelocity(
             enemySpawnX,
             enemySpawnY,
@@ -209,17 +232,9 @@ function spawnEnemies() {
 //? Shooting projectiles from player to direction of mouse pos
 function spawnProjectiles() {
   spawnProjectilesInterval = setTimeout(() => {
-    let rand = getRandomArbitrary(-25, 25);
-    let rand2 = getRandomArbitrary(-25, 25);
-
     let x = player.x;
-    y = player.y;
-    let v = calculateVelocity(
-      player.x,
-      player.y,
-      mouseX + rand,
-      mouseY + rand2
-    );
+    let y = player.y;
+    let v = calculateVelocity(player.x, player.y, mouseX, mouseY);
     v.x *= 5.5;
     v.y *= 5.5;
 
@@ -236,13 +251,14 @@ function animate() {
   c.fillStyle = "rgba(80,12,12,1)";
   c.fillRect(0, 0, canvas.width, canvas.height);
   //? test line
+  c.lineWidth = 35;
+  c.lineJoin = "round";
   c.beginPath();
   c.moveTo(enemySpawnX, enemySpawnY);
   c.lineTo(trackPoints[0].x, trackPoints[0].y);
   c.lineTo(trackPoints[1].x, trackPoints[1].y);
   c.lineTo(trackPoints[2].x, trackPoints[2].y);
 
-  c.lineWidth = 35;
   c.stroke();
 
   player.speedX = 0;
@@ -300,8 +316,6 @@ function animate() {
       enemy.radius = 0;
       let dmg = bloonHealth[enemy.color];
       health -= dmg;
-      currentEnemies--;
-      console.log(currentEnemies);
       enemies.splice(index, 1);
     }
 
@@ -321,13 +335,9 @@ function animate() {
 
       //? When Projectiles touch Enemy
       if (dist - enemy.radius - projectile.radius < 0) {
-        // todo - add playerDmg var and use here for "8"
-        // todo - use enemy.color instead of radius for bloons idea.
-        // Check if enemy is to be removed or not
         let allColors = Object.keys(bloonHealth);
 
         if (enemy.health - playerDmg > 0) {
-          // todo - pass enemy and index to handleEnemyHit: if allColors[enemy.health] === "rainbow" {enemies.splice(index, 1); draw enemies around its pos;}
           updateScore();
           enemy.health -= playerDmg;
           enemy.color = allColors[enemy.health - 1];
@@ -339,7 +349,6 @@ function animate() {
           updateScore(2.5);
           setTimeout(() => {
             enemies.splice(index, 1);
-            currentEnemies--;
             projectiles.splice(projectileIndex, 1);
           }, 0);
         }
@@ -364,7 +373,7 @@ function startGame() {
 //? Start Wave
 function startWave() {
   //? return so that this code cannot be ran when there are still current enemies
-  if (currentEnemies > 0) {
+  if (enemies.length > 0) {
     return;
   }
 
@@ -372,9 +381,8 @@ function startWave() {
   currentWave++;
   clearInterval(spawnEnemiesInterval);
   clearInterval(spawnProjectilesInterval);
-  currentEnemies = waveEnemies[currentWave - 1].enemies.length;
+  totalEnemies = waveEnemies[currentWave - 1].enemies.length;
   enemiesToSpawn = waveEnemies[currentWave - 1].enemies.length;
-  console.log(currentEnemies);
   spawnEnemies();
   spawnProjectiles();
 }
@@ -401,3 +409,4 @@ function heroPlaced(e) {
 startGameBtn.addEventListener("click", startGame);
 startWaveBtn.addEventListener("click", startWave);
 selectHeroBtn.addEventListener("click", heroSelected);
+//todo - select heli or flying dartling
