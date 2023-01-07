@@ -1,14 +1,15 @@
-import { calculateVelocity } from "./lib/velocity.js";
-import { waveEnemies } from "./lib/constants.js";
+import "../styles/main.css";
+import { calculateVelocity } from "../lib/velocity.js";
+import { waveEnemies } from "../lib/constants.js";
 //? Selecting Canvas and setting width and height
 const canvas = document.querySelector("canvas");
 
-canvas.width = innerWidth;
-canvas.height = innerHeight;
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
 // window listeners
 window.addEventListener("resize", () => {
-  canvas.width = innerWidth;
-  canvas.height = innerHeight;
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
   stopGame();
 });
 window.addEventListener("keydown", function (e) {
@@ -63,9 +64,9 @@ const startWaveBtn = document.getElementById("startWaveBtn");
 const selectHeroBtn = document.getElementById("selectHeroBtn");
 const modelEl = document.getElementById("modelEl");
 const trackPoints = [
-  { x: canvas.width / 2, y: canvas.height / 2 },
-  { x: canvas.width / 2, y: 30 },
-  { x: 950, y: 600 },
+  { x: canvas.width / 2, y: canvas.height / 4 },
+  { x: canvas.width / 1.5, y: canvas.height / 2 },
+  { x: canvas.width / 4, y: canvas.height / 1.5 },
 ];
 
 let x = canvas.width / 2;
@@ -80,7 +81,7 @@ let mouseY = null;
 let enemySpawnX = canvas.width / 1.5;
 let enemySpawnY = 0;
 let projectiles = [];
-let towerSpaces = [];
+let buildAreas = [];
 let enemies = [];
 let myKeys = [];
 let enemiesToSpawn = 0;
@@ -138,18 +139,11 @@ class Shooter extends Ball {
     this.y = this.y + this.velocity.y;
   }
 }
-class Piece extends Ball {
-  constructor(x, y, radius, color, velocity) {
-    super(x, y, radius, color);
-    this.velocity = velocity;
-    this.trackPoint = 0;
-    this.health = bloonHealth[color];
-  }
 
-  update() {
-    this.draw();
-    this.x = this.x + this.velocity.x;
-    this.y = this.y + this.velocity.y;
+class BuildArea extends Ball {
+  constructor(x, y, radius) {
+    super(x, y, radius);
+    this.color = "#6C9A8B";
   }
 }
 function getRandomInt(max) {
@@ -166,6 +160,7 @@ function handleMouseMove(e) {
   if (heroSelect) {
     hero.x = e.clientX;
     hero.y = e.clientY;
+    //todo - loop over the buildAreas
   }
 }
 
@@ -177,11 +172,15 @@ function updateScore(times = 1) {
 // Reinitializing Variables for Starting a New Game
 function init() {
   player = new Ball(x, y, 10, "white");
+  buildAreas.push(
+    new BuildArea(trackPoints[0].x + 75 * 2, trackPoints[0].y, 75),
+    new BuildArea(trackPoints[0].x, trackPoints[0].y + 75 * 2, 75),
+    new BuildArea(trackPoints[0].x - 75, trackPoints[2].y + 75, 75)
+  );
   projectiles = [];
   enemies = [];
   score = 0;
   spawnTime = 1000;
-  highestEl.innerHTML = score;
   scoreEl.innerHTML = score;
   highestEl.innerHTML = highest;
 }
@@ -250,7 +249,6 @@ function spawnProjectiles() {
 //? Recursive animate func
 function animate() {
   healthEl.innerHTML = health;
-
   animationId = requestAnimationFrame(animate);
   c.fillStyle = "rgba(80,12,12,1)";
   c.fillRect(0, 0, canvas.width, canvas.height);
@@ -281,12 +279,19 @@ function animate() {
   if (myKeys && myKeys["KeyS"] && player.y < canvas.height - player.radius) {
     player.speedY = 3;
   }
+
   player.draw();
   player.newPos();
 
   if (hero) {
     hero.draw();
   }
+  buildAreas.forEach((area, index) => {
+    area.draw();
+  });
+
+  //TODO - convert player & hero to towers array and loop over them
+
   // Update and remove projectiles
   projectiles.forEach((projectile, index) => {
     projectile.update();
@@ -393,7 +398,6 @@ function startWave() {
 
 //todo - use for towerSelected when adding towers
 function heroSelected() {
-  //set heroSelect true
   if (hero) {
     return;
   }
@@ -413,4 +417,3 @@ function heroPlaced(e) {
 startGameBtn.addEventListener("click", startGame);
 startWaveBtn.addEventListener("click", startWave);
 selectHeroBtn.addEventListener("click", heroSelected);
-//todo - select heli or flying dartling
