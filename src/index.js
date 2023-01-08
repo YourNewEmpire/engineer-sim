@@ -73,9 +73,10 @@ let x = canvas.width / 2;
 let y = canvas.height / 2;
 let player;
 let playerDmg = 1;
-let hero;
+let towerSelected;
+let towers = [];
 let health = 10;
-let heroSelect = false;
+let towerSelect = false;
 let mouseX = null;
 let mouseY = null;
 let enemySpawnX = canvas.width / 1.5;
@@ -95,6 +96,7 @@ let spawnProjectilesInterval;
 let projectileSpawnTime = 300;
 let spawnTime = 300;
 
+// todo re name vars, organise waves fully, and use highest wave for highestEl.
 highestEl.innerHTML = highest;
 healthEl.innerHTML = health;
 
@@ -124,8 +126,8 @@ class Ball {
 }
 
 // todo - rename and add constructor params for color, health, speed other properties etc
-// Shooter Ball for Moving Ball
-class Shooter extends Ball {
+// Bloon Ball for Moving Ball
+class Bloon extends Ball {
   constructor(x, y, radius, color, velocity) {
     super(x, y, radius, color);
     this.velocity = velocity;
@@ -157,16 +159,15 @@ function handleMouseMove(e) {
   mouseX = e.clientX;
   mouseY = e.clientY;
 
-  if (heroSelect) {
-    hero.x = e.clientX;
-    hero.y = e.clientY;
-    //todo - loop over the buildAreas
+  if (towerSelect) {
+    towerSelected.x = e.clientX;
+    towerSelected.y = e.clientY;
   }
 }
 
 //todo - rework  how scoring works in the game
-function updateScore(times = 1) {
-  score += 100 * times;
+function updatePoints(times = 1) {
+  score += 1 * times;
   scoreEl.innerHTML = score;
 }
 // Reinitializing Variables for Starting a New Game
@@ -193,7 +194,7 @@ function stopGame() {
   canvas.removeEventListener("mousemove", handleMouseMove);
   modelEl.style.display = "flex"; // Dialogue box
   overlay.style.display = "none"; // score and highest
-  if (score > highest) {
+  if (points > highest) {
     highest = score;
     localStorage.setItem("highest", highest);
   }
@@ -208,7 +209,7 @@ function spawnEnemies() {
 
     if (enemiesToSpawn > 0) {
       enemies.push(
-        new Shooter(
+        new Bloon(
           enemySpawnX,
           enemySpawnY,
           radius,
@@ -241,7 +242,7 @@ function spawnProjectiles() {
     v.x *= 5.5;
     v.y *= 5.5;
 
-    projectiles.push(new Shooter(x, y, 5, "rgba(150,150,150,1)", v));
+    projectiles.push(new Bloon(x, y, 5, "rgba(150,150,150,1)", v));
     spawnProjectiles();
   }, projectileSpawnTime);
 }
@@ -263,35 +264,19 @@ function animate() {
 
   c.stroke();
 
-  player.speedX = 0;
-  player.speedY = 0;
-
-  // Update player position after checking for keys inputted.
-  if (myKeys && myKeys["KeyA"] && player.x > 0) {
-    player.speedX = -3;
-  }
-  if (myKeys && myKeys["KeyD"] && player.x < canvas.width - player.radius) {
-    player.speedX = 3;
-  }
-  if (myKeys && myKeys["KeyW"] && player.y > 0) {
-    player.speedY = -3;
-  }
-  if (myKeys && myKeys["KeyS"] && player.y < canvas.height - player.radius) {
-    player.speedY = 3;
-  }
-
-  player.draw();
-  player.newPos();
-
-  if (hero) {
-    hero.draw();
-  }
   buildAreas.forEach((area, index) => {
     area.draw();
+    //todo - check for player collision? test here
   });
 
-  //TODO - convert player & hero to towers array and loop over them
+  if (towerSelect) {
+    towerSelected.draw();
+  }
+  towers.forEach((tower, index) => {
+    tower.draw();
+  });
 
+  //TODO - convert player & towerSelected to towers array and loop over them
   // Update and remove projectiles
   projectiles.forEach((projectile, index) => {
     projectile.update();
@@ -307,7 +292,6 @@ function animate() {
     }
   });
 
-  // TODO - The collision of enemy/player is not needed anymore, it should be collision with end
   enemies.forEach((enemy, index) => {
     enemy.update();
 
@@ -339,6 +323,8 @@ function animate() {
       enemy.trackPoint++;
     }
 
+    //todo - loop over towers here as well for tower detection
+
     projectiles.forEach((projectile, projectileIndex) => {
       const dist = Math.hypot(projectile.x - enemy.x, projectile.y - enemy.y);
 
@@ -347,7 +333,7 @@ function animate() {
         let allColors = Object.keys(bloonHealth);
 
         if (enemy.health - playerDmg > 0) {
-          updateScore();
+          updatePoints();
           enemy.health -= playerDmg;
           enemy.color = allColors[enemy.health - 1];
           setTimeout(() => {
@@ -355,7 +341,7 @@ function animate() {
           }, 0);
         } else {
           //handle enemy kill
-          updateScore(2.5);
+          updatePoints(2);
           setTimeout(() => {
             enemies.splice(index, 1);
             projectiles.splice(projectileIndex, 1);
@@ -385,7 +371,6 @@ function startWave() {
   if (enemies.length > 0) {
     return;
   }
-
   //? increment currentWave state and reset enemy spawn interval
   currentWave++;
   clearInterval(spawnEnemiesInterval);
@@ -396,24 +381,26 @@ function startWave() {
   spawnProjectiles();
 }
 
-//todo - use for towerSelected when adding towers
-function heroSelected() {
-  if (hero) {
+// todo - use e to get button id and determine tower
+function handleTowerSelect() {
+  if (towerSelect) {
     return;
   }
-  heroSelect = true;
-  hero = new Ball(mouseX, mouseY, 10, "white");
-  canvas.addEventListener("click", heroPlaced);
+  towerSelect = true;
+  towerSelected = new Ball(mouseX, mouseY, 10, "white");
+  canvas.addEventListener("click", towerPlaced);
 }
-function heroPlaced(e) {
-  hero.x = e.clientX;
-  hero.y = e.clientY;
-  heroSelect = false;
 
-  canvas.removeEventListener("click", heroPlaced);
+function towerPlaced(e) {
+  towerSelected.x = e.clientX;
+  towerSelected.y = e.clientY;
+  towerSelect = false;
+  towers.push(towerSelected);
+  towerSelected = {};
+  canvas.removeEventListener("click", towerPlaced);
 }
 
 //? Start Game Button
 startGameBtn.addEventListener("click", startGame);
 startWaveBtn.addEventListener("click", startWave);
-selectHeroBtn.addEventListener("click", heroSelected);
+selectHeroBtn.addEventListener("click", handleTowerSelect);

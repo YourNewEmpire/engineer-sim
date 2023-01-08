@@ -16,6 +16,7 @@
       position: fixed; 
       background-color: rgba(32, 0, 0, 0.3);
       display:flex;
+      flex-direction: column;
       color: white;
       font-size: 30px;
       column-gap: 12px;
@@ -77,11 +78,10 @@
       padding: 1em;
       background: #752112;
       font-size: 24px;
-      transition: all 0.8s ease;
+      transition: all 0.2s ease;
     }
 
     #modelEl button:hover {
-
       background: #200000;
     }
 
