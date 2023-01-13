@@ -331,12 +331,14 @@ function animate() {
     tower.drawRange();
     let enemiesInRange = [];
     enemies.forEach((enemy, enemyIndex) => {
+      //! calculation here not accurate, not working as expected
       const dist = Math.hypot(enemy.x - tower.x, enemy.y - tower.y);
-      if (dist < tower.range) {
+      if (dist <= tower.range) {
         enemiesInRange.push(enemy);
       }
     });
     if (enemiesInRange.length > 0 && !towerIntervals[towerIndex]) {
+      //todo - can pass enemies here for firing at enemies
       spawnTowerProjectilesNow(tower, towerIndex);
       spawnTowerProjectiles(tower, towerIndex);
     } else if (enemiesInRange.length === 0) {
