@@ -1,3 +1,5 @@
+
+
 * {
       box-sizing: border-box;
       margin: 0;
@@ -6,50 +8,33 @@
       line-height: 1;
   }
 
+
     body {
       color: #333333;
       overflow: hidden;
-
-    }
-
-    #overlay {
-      position: fixed; 
-      background-color: rgba(32, 0, 0, 0.3);
-      display:flex;
-      flex-direction: column;
-      color: white;
-      font-size: 30px;
-      column-gap: 12px;
-      padding: 5px;
-      user-select: none;
-      z-index: 99;
-    }
-
-    #overlay p {
-      display: inline-block;
-      
     }
 
     button:focus {
       outline: none;
     }
 
-    #modelEl {
+    #introEl {
       position: fixed;
       top: 0;
       left: 0;
       bottom: 0;
       right: 0;
-      padding: 1em;
       text-align: center;
       overflow: hidden;
       display: flex;
       align-items: center;
       justify-content: center;
       z-index: 999;
+      transition: all 0.4s ease;
     }
 
-    #modelEl > div {
+    #introEl > div {
+      box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
       border-radius: 0.5rem;
       width: 100%;
       max-width: 350px;
@@ -57,19 +42,18 @@
       background: white;
     }
 
-    #modelEl h1 {
+    #introEl h1 {
       font-size: 3em;
       font-weight: 600;
     }
 
-    #modelEl p {
+    #introEl p {
       color: #752112;
       font-size: 18px;
       margin-top: 1rem;
     }
 
-    
-    #modelEl button {
+    #introEl button {
       width: 100%;
       border: none;
       color: white;
@@ -81,22 +65,143 @@
       transition: all 0.2s ease;
     }
 
-    #modelEl button:hover {
+    #introEl button:hover {
       background: #200000;
+      border-radius: 0.25rem;
     }
 
-    #modelEl .warning {
+    #introEl button:active {
+      transform: scale(0.9);
+    }
+
+    #introEl .warning {
       color: darkorange;
     }
-    #modelEl .intro {
-      
+
+    #introEl .intro {
       font-weight: 800;
       font-size: 24px;
     }
     
+    #prepareGameEl {
+      position: fixed;
+      top: 0;
+      left: 0;
+      bottom: 0;
+      right: 0;
+      padding: 1em;
+      text-align: center;
+      overflow: hidden;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 999;
+    }
 
+    #prepareGameEl > div {
+      box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+      width: 100%;
+      max-width: 500px;
+      padding: 1.5em;
+      background: white;
+    }
 
+    #prepareGameEl h1 {
+      font-size: 3em;
+      font-weight: 600;
+    }
 
+    #prepareGameEl p {
+      color: #752112;
+      font-size: 18px;
+      margin-top: 1rem;
+    }
+
+    #prepareGameEl .buttonGroup {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 12px;
+    }
+
+    #prepareGameEl button {
+      width: 100%;
+      border: none;
+      color: white;
+      cursor: pointer;
+      border-radius: 0.5rem;
+      padding: 1em;
+      background: #752112;
+      font-size: 24px;
+      transition: all 0.2s ease;
+    }
+
+    #prepareGameEl button:hover {
+      background: #200000;
+      border-radius: 0.25rem;
+    }
+
+    #prepareGameEl button:active {
+      transform: scale(0.9);
+    }
+
+    #prepareGameEl .warning {
+      color: darkorange;
+    }
+
+    #prepareGameEl .intro {
+      font-weight: 800;
+      font-size: 24px;
+    }
+    
+    /*? overlay in-game element */
+    #overlay {
+      position: fixed; 
+      display:flex;
+      flex-direction: column;
+      column-gap: 12px;
+      padding: 5px;
+      z-index: 99;
+      background-color: rgba(32, 0, 0, 0.3);
+      color: white;
+      font-size: 30px;
+      border-radius: 0.75rem;
+      user-select: none;
+      /*cant figure out why it creates a pointer */
+      cursor: default;
+    }
+
+    #overlay p {
+      display: inline-block;
+    }
+
+    #overlay .buttonGroup {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr 1fr;
+      gap: 12px;
+      font-size: 24px;
+    }
+
+    #overlay button {
+      width: 100%;
+      color: white;
+      cursor: pointer;
+      border-radius: 0.5rem;
+      border: none;
+      padding: 0.75rem;
+      background: #752112;
+      font-size: inherit;
+      transition: all 0.2s ease;
+    }
+
+    #overlay button:hover {
+      background: #200000;
+      border-radius: 0.25rem;
+    }
+
+    #overlay button:active {
+      transform: scale(0.9);
+    }
+    
     canvas {
       width: 100%;
       height: 100%;

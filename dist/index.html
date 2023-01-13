@@ -7,7 +7,6 @@
       content="width=device-width, initial-scale=1.0, maximum-scale=1.0, 
      user-scalable=0"
     />
-    <link rel="stylesheet" href="/styles/main.css" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -19,7 +18,7 @@
     <div id="overlay">
       <p>
         Points:
-        <span class="ml-1" id="scoreEl">0</span>
+        <span class="ml-1" id="pointsEl">0</span>
       </p>
       <p>
         Highest:
@@ -29,15 +28,16 @@
         Health:
         <span class="ml-1" id="healthEl">0</span>
       </p>
-      <button id="startWaveBtn">Start Wave</button>
-      <button id="selectHeroBtn">Select Hero</button>
+      <div class="buttonGroup">
+        <button id="startWaveBtn">Start Wave</button>
+        <button id="selectHeroBtn">Select Hero</button>
+      </div>
     </div>
 
-    <div id="modelEl">
+    <div id="introEl">
       <div>
-        <div>
-          <button id="startGameBtn">Start Game</button>
-        </div>
+        <button id="startGameBtn" class="styledButton">Start Game</button>
+
         <p class="intro">
           Welcome to Engineer Defence. An attempted bloons clone
         </p>
@@ -48,7 +48,40 @@
         </p>
       </div>
     </div>
+    <div id="prepareGameEl">
+      <div>
+        <div class="buttonGroup">
+          <button
+            onclick="startGame('easy')"
+            id="startGameBtn"
+            class="styledButton"
+          >
+            👶Easy
+          </button>
+          <button
+            onclick="startGame('medium')"
+            id="startGameBtn"
+            class="styledButton"
+          >
+            👨‍🎓Medium
+          </button>
+          <button
+            onclick="startGame('hard')"
+            id="startGameBtn"
+            class="styledButton"
+          >
+            👷Hard
+          </button>
+        </div>
 
+        <p class="intro">Select a difficulty</p>
+        <p>
+          The quality, quantity, velocity of the enemies will increase as you go
+          through the difficulty options. End of round cash bonus for a higher
+          difficulty too
+        </p>
+      </div>
+    </div>
     <canvas></canvas>
 
     <script src="bundle.js"></script>

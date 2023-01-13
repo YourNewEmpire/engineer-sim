@@ -54,7 +54,7 @@ const bloonHealth = {
   rainbow: 6,
 };
 const c = canvas.getContext("2d");
-const scoreEl = document.getElementById("scoreEl");
+const pointsEl = document.getElementById("pointsEl");
 const overlay = document.getElementById("overlay");
 overlay.style.display = "none";
 const highestEl = document.getElementById("highestEl");
@@ -62,8 +62,9 @@ const healthEl = document.getElementById("healthEl");
 const startGameBtn = document.getElementById("startGameBtn");
 const startWaveBtn = document.getElementById("startWaveBtn");
 const selectHeroBtn = document.getElementById("selectHeroBtn");
-const modelEl = document.getElementById("modelEl");
-const trackPoints = [
+const introEl = document.getElementById("introEl");
+const prepareGameEl = document.getElementById("prepareGameEl");
+let trackPoints = [
   { x: canvas.width / 2, y: canvas.height / 4 },
   { x: canvas.width / 1.5, y: canvas.height / 2 },
   { x: canvas.width / 4, y: canvas.height / 1.5 },
@@ -75,6 +76,7 @@ let player;
 let playerDmg = 1;
 let towerSelected;
 let towers = [];
+let towerIntervals = [];
 let health = 10;
 let towerSelect = false;
 let mouseX = null;
@@ -86,14 +88,13 @@ let buildAreas = [];
 let enemies = [];
 let myKeys = [];
 let enemiesToSpawn = 0;
-let totalEnemies = 0;
 let currentWave = 0;
 let score = 0;
 let highest = localStorage.getItem("highest") || 0;
 let animationId;
 let spawnEnemiesInterval;
 let spawnProjectilesInterval;
-let projectileSpawnTime = 300;
+let projectileSpawnTime = 500;
 let spawnTime = 300;
 
 // todo re name vars, organise waves fully, and use highest wave for highestEl.
@@ -103,11 +104,12 @@ healthEl.innerHTML = health;
 // Starting Ball Class
 //todo - add stuff to properties like fire damage, explosive, whatever then compare when projectiles hit
 class Ball {
-  constructor(x, y, radius, color) {
+  constructor(x, y, radius, color, range) {
     this.x = x;
     this.y = y;
     this.radius = radius;
     this.color = color;
+    this.range = range;
     this.speedX = 0;
     this.speedY = 0;
     this.properties = {};
@@ -117,6 +119,12 @@ class Ball {
     c.beginPath();
     c.arc(this.x, this.y, this.radius, Math.PI * 2, 0, false);
     c.fillStyle = this.color;
+    c.fill();
+  }
+  drawRange() {
+    c.beginPath();
+    c.arc(this.x, this.y, this.range, Math.PI * 2, 0, false);
+    c.fillStyle = "rgba(150,150,150, 0.3)";
     c.fill();
   }
   newPos() {
@@ -148,9 +156,7 @@ class BuildArea extends Ball {
     this.color = "#6C9A8B";
   }
 }
-function getRandomInt(max) {
-  return Math.floor(Math.random() * max);
-}
+
 function getRandomArbitrary(min, max) {
   return Math.random() * (max - min) + min;
 }
@@ -168,21 +174,45 @@ function handleMouseMove(e) {
 //todo - rework  how scoring works in the game
 function updatePoints(times = 1) {
   score += 1 * times;
-  scoreEl.innerHTML = score;
+  pointsEl.innerHTML = score;
 }
 // Reinitializing Variables for Starting a New Game
-function init() {
+function init(gameDifficultyStr) {
   player = new Ball(x, y, 10, "white");
-  buildAreas.push(
-    new BuildArea(trackPoints[0].x + 75 * 2, trackPoints[0].y, 75),
-    new BuildArea(trackPoints[0].x, trackPoints[0].y + 75 * 2, 75),
-    new BuildArea(trackPoints[0].x - 75, trackPoints[2].y + 75, 75)
-  );
+  if (!gameDifficultyStr) {
+    return;
+  }
+  if (gameDifficultyStr === "easy") {
+    buildAreas.push(
+      new BuildArea(trackPoints[0].x + 75 * 2, trackPoints[0].y, 75),
+      new BuildArea(trackPoints[0].x, trackPoints[0].y + 75 * 2, 75),
+      new BuildArea(trackPoints[0].x - 75, trackPoints[2].y + 75, 75)
+    );
+  } else if (gameDifficultyStr === "medium") {
+    trackPoints = [
+      { x: canvas.width / 2, y: canvas.height / 4 },
+      { x: canvas.width / 1.5, y: canvas.height / 2 },
+      { x: canvas.width / 4, y: canvas.height / 1.5 },
+    ];
+
+    buildAreas.push(
+      new BuildArea(trackPoints[0].x + 75 * 2, trackPoints[0].y, 75),
+      new BuildArea(trackPoints[0].x, trackPoints[0].y + 75 * 2, 75),
+      new BuildArea(trackPoints[0].x - 75, trackPoints[2].y + 75, 75)
+    );
+  } else if (gameDifficultyStr === "hard") {
+    buildAreas.push(
+      new BuildArea(trackPoints[0].x + 75 * 2, trackPoints[0].y, 75),
+      new BuildArea(trackPoints[0].x, trackPoints[0].y + 75 * 2, 75),
+      new BuildArea(trackPoints[0].x - 75, trackPoints[2].y + 75, 75)
+    );
+  }
+
   projectiles = [];
   enemies = [];
   score = 0;
   spawnTime = 1000;
-  scoreEl.innerHTML = score;
+  pointsEl.innerHTML = score;
   highestEl.innerHTML = highest;
 }
 
@@ -192,13 +222,13 @@ function stopGame() {
   clearInterval(spawnProjectilesInterval);
   cancelAnimationFrame(animationId); // Exit Animation
   canvas.removeEventListener("mousemove", handleMouseMove);
-  modelEl.style.display = "flex"; // Dialogue box
+  introEl.style.display = "flex"; // Dialogue box
   overlay.style.display = "none"; // score and highest
   if (points > highest) {
     highest = score;
     localStorage.setItem("highest", highest);
   }
-  scoreEl.innerHTML = score;
+  pointsEl.innerHTML = score;
 }
 
 //? Spawns enemies at start of track
@@ -213,7 +243,7 @@ function spawnEnemies() {
           enemySpawnX,
           enemySpawnY,
           radius,
-          waveEnemies[currentWave - 1].enemies[totalEnemies - 1],
+          waveEnemies[currentWave - 1].enemies[enemiesToSpawn - 1],
           calculateVelocity(
             enemySpawnX,
             enemySpawnY,
@@ -223,15 +253,12 @@ function spawnEnemies() {
         )
       );
       enemiesToSpawn--;
-      console.log(enemiesToSpawn);
-    } else {
-      console.log("still running");
     }
     spawnEnemies();
   }, spawnTime);
 }
 
-//? Shooting projectiles from player to direction of mouse pos
+//? Shooting projectiles from player/hero to direction of mouse pos
 function spawnProjectiles() {
   const dist = Math.hypot(mouseX - player.x, mouseY - player.y);
   let rand = getRandomArbitrary(0 - dist / 10, 0 + dist / 10);
@@ -239,11 +266,36 @@ function spawnProjectiles() {
     let x = player.x;
     let y = player.y;
     let v = calculateVelocity(player.x, player.y, mouseX + rand, mouseY + rand);
+    //todo - Use this in spawnEnemies for enemy speed
     v.x *= 5.5;
     v.y *= 5.5;
 
     projectiles.push(new Bloon(x, y, 5, "rgba(150,150,150,1)", v));
     spawnProjectiles();
+  }, projectileSpawnTime);
+}
+function spawnTowerProjectilesNow(tower, towerIndex) {
+  setTimeout(() => {
+    let v = calculateVelocity(tower.x, tower.y, tower.x - 5, tower.y);
+    v.x *= 5.5;
+    v.y *= 5.5;
+
+    //todo - push 8 projectiles, all
+
+    projectiles.push(new Bloon(tower.x, tower.y, 10, "rgba(150,150,150,1)", v));
+  }, 0);
+}
+
+function spawnTowerProjectiles(tower, towerIndex) {
+  towerIntervals[towerIndex] = setTimeout(() => {
+    let v = calculateVelocity(tower.x, tower.y, tower.x - 5, tower.y);
+    v.x *= 5.5;
+    v.y *= 5.5;
+
+    //todo - push 8 projectiles, all
+
+    projectiles.push(new Bloon(tower.x, tower.y, 10, "rgba(150,150,150,1)", v));
+    spawnTowerProjectiles(tower, towerIndex);
   }, projectileSpawnTime);
 }
 
@@ -271,12 +323,26 @@ function animate() {
 
   if (towerSelect) {
     towerSelected.draw();
+    towerSelected.drawRange();
   }
-  towers.forEach((tower, index) => {
-    tower.draw();
-  });
 
-  //TODO - convert player & towerSelected to towers array and loop over them
+  towers.forEach((tower, towerIndex) => {
+    tower.draw();
+    tower.drawRange();
+    let enemiesInRange = [];
+    enemies.forEach((enemy, enemyIndex) => {
+      const dist = Math.hypot(enemy.x - tower.x, enemy.y - tower.y);
+      if (dist < tower.range) {
+        enemiesInRange.push(enemy);
+      }
+    });
+    if (enemiesInRange.length > 0 && !towerIntervals[towerIndex]) {
+      spawnTowerProjectilesNow(tower, towerIndex);
+      spawnTowerProjectiles(tower, towerIndex);
+    } else if (enemiesInRange.length === 0) {
+      clearInterval(towerIntervals[towerIndex]);
+    }
+  });
   // Update and remove projectiles
   projectiles.forEach((projectile, index) => {
     projectile.update();
@@ -305,7 +371,6 @@ function animate() {
       enemy.y - trackPoints[trackPoints.length - 1].y
     );
     if (endDist - enemy.radius < 0) {
-      console.log("end");
       enemy.radius = 0;
       let dmg = bloonHealth[enemy.color];
       health -= dmg;
@@ -351,17 +416,19 @@ function animate() {
     });
   });
 }
-
+function introClick() {
+  introEl.style.display = "none";
+  prepareGameEl.style.display = "flex";
+}
 //? Start New Game
-function startGame() {
+function startGame(gameDifficulty) {
   x = canvas.width / 2;
   y = canvas.height / 2;
   canvas.addEventListener("mousemove", handleMouseMove);
-  init();
+  init(gameDifficulty);
   animate();
   clearInterval(spawnProjectilesInterval);
-
-  modelEl.style.display = "none";
+  prepareGameEl.style.display = "none";
   overlay.style.display = "flex";
 }
 
@@ -374,11 +441,10 @@ function startWave() {
   //? increment currentWave state and reset enemy spawn interval
   currentWave++;
   clearInterval(spawnEnemiesInterval);
-  clearInterval(spawnProjectilesInterval);
-  totalEnemies = waveEnemies[currentWave - 1].enemies.length;
+  //clearInterval(spawnProjectilesInterval);
   enemiesToSpawn = waveEnemies[currentWave - 1].enemies.length;
   spawnEnemies();
-  spawnProjectiles();
+  //spawnProjectiles();
 }
 
 // todo - use e to get button id and determine tower
@@ -387,7 +453,7 @@ function handleTowerSelect() {
     return;
   }
   towerSelect = true;
-  towerSelected = new Ball(mouseX, mouseY, 10, "white");
+  towerSelected = new Ball(mouseX, mouseY, 10, "#fff", 150);
   canvas.addEventListener("click", towerPlaced);
 }
 
@@ -401,6 +467,58 @@ function towerPlaced(e) {
 }
 
 //? Start Game Button
-startGameBtn.addEventListener("click", startGame);
+window.startGame = startGame;
+startGameBtn.addEventListener("click", introClick);
 startWaveBtn.addEventListener("click", startWave);
 selectHeroBtn.addEventListener("click", handleTowerSelect);
+/*
+towers.forEach((tower, towerIndex) => {
+    tower.draw();
+    let firstBloon = null;
+    if (enemies.length > 0) {
+      enemies.forEach((enemy, enemyIndex) => {
+        if (firstBloon === null) {
+          firstBloon = enemy;
+        } else if ((firstBloon.health = 0)) {
+          firstBloon = enemy;
+        } else if (
+          Math.hypot(
+            firstBloon.x - trackPoints[trackPoints.length - 1].x,
+            firstBloon.y - trackPoints[trackPoints.length - 1].y
+          ) >
+          Math.hypot(
+            enemy.x - trackPoints[trackPoints.length - 1].x,
+            enemy.y - trackPoints[trackPoints.length - 1].y
+          )
+        ) {
+          firstBloon = enemy;
+          console.log(enemy);
+        }
+      });
+
+      const dist = Math.hypot(tower.x - firstBloon.x, tower.y - firstBloon.y);
+      if (dist < tower.range && !towerIntervals[towerIndex]) {
+        towerIntervals[towerIndex] = setInterval(() => {
+          let v = calculateVelocity(
+            tower.x,
+            tower.y,
+            firstBloon.x,
+            firstBloon.y
+          );
+          v.x *= 5.5;
+          v.y *= 5.5;
+
+          projectiles.push(
+            new Bloon(tower.x, tower.y, 10, "rgba(150,150,150,1)", v)
+          );
+        }, projectileSpawnTime);
+      }
+      if (dist > tower.range && towerIntervals[towerIndex]) {
+        clearInterval(towerIntervals[towerIndex]);
+      }
+    } else {
+      console.log("no enemies" + towerIntervals[towerIndex]);
+      firstBloon = null;
+    }
+  });
+*/
