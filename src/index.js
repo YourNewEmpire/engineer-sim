@@ -236,7 +236,6 @@ function spawnEnemies() {
   //? Spawn a enemy every spawnTime
   spawnEnemiesInterval = setTimeout(() => {
     const radius = 10;
-
     if (enemiesToSpawn > 0) {
       enemies.push(
         new Bloon(
