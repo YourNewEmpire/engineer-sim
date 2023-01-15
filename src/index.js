@@ -72,6 +72,7 @@ let trackPoints = [
 
 let x = canvas.width / 2;
 let y = canvas.height / 2;
+// todo - Player will get choice: heli or dartling
 let player;
 let playerDmg = 1;
 let towerSelected;
@@ -97,7 +98,7 @@ let spawnProjectilesInterval;
 let projectileSpawnTime = 500;
 let spawnTime = 300;
 
-// todo re name vars, organise waves fully, and use highest wave for highestEl.
+// todo re name these vars, organise waves fully, and use highest wave for highestEl.
 highestEl.innerHTML = highest;
 healthEl.innerHTML = health;
 
@@ -139,6 +140,7 @@ class Bloon extends Ball {
   constructor(x, y, radius, color, velocity) {
     super(x, y, radius, color);
     this.velocity = velocity;
+    //? used as index number to calc velocity to the next trackpoint
     this.trackPoint = 0;
     this.health = bloonHealth[color];
   }
@@ -157,6 +159,16 @@ class BuildArea extends Ball {
   }
 }
 
+function drawTrack() {
+  c.lineWidth = 35;
+  c.lineJoin = "round";
+  c.beginPath();
+  c.moveTo(enemySpawnX, enemySpawnY);
+  c.lineTo(trackPoints[0].x, trackPoints[0].y);
+  c.lineTo(trackPoints[1].x, trackPoints[1].y);
+  c.lineTo(trackPoints[2].x, trackPoints[2].y);
+  c.stroke();
+}
 function getRandomArbitrary(min, max) {
   return Math.random() * (max - min) + min;
 }
@@ -182,6 +194,7 @@ function init(gameDifficultyStr) {
   if (!gameDifficultyStr) {
     return;
   }
+  //todo - use global enemyVelocity var
   if (gameDifficultyStr === "easy") {
     buildAreas.push(
       new BuildArea(trackPoints[0].x + 75 * 2, trackPoints[0].y, 75),
@@ -236,6 +249,16 @@ function spawnEnemies() {
   //? Spawn a enemy every spawnTime
   spawnEnemiesInterval = setTimeout(() => {
     const radius = 10;
+    let v = calculateVelocity(
+      enemySpawnX,
+      enemySpawnY,
+      trackPoints[0].x,
+      trackPoints[0].y
+    );
+    //todo - use global enemyVelocity var
+    v.x *= 5.5;
+    v.y *= 5.5;
+
     if (enemiesToSpawn > 0) {
       enemies.push(
         new Bloon(
@@ -243,12 +266,7 @@ function spawnEnemies() {
           enemySpawnY,
           radius,
           waveEnemies[currentWave - 1].enemies[enemiesToSpawn - 1],
-          calculateVelocity(
-            enemySpawnX,
-            enemySpawnY,
-            trackPoints[0].x,
-            trackPoints[0].y
-          )
+          v
         )
       );
       enemiesToSpawn--;
@@ -273,13 +291,14 @@ function spawnProjectiles() {
     spawnProjectiles();
   }, projectileSpawnTime);
 }
+
+//todo - can pass enemies here for firing at enemies
 function spawnTowerProjectilesNow(tower, towerIndex) {
   setTimeout(() => {
+    //todo - configure firing at enemies and tack shooter clone
     let v = calculateVelocity(tower.x, tower.y, tower.x - 5, tower.y);
     v.x *= 5.5;
     v.y *= 5.5;
-
-    //todo - push 8 projectiles, all
 
     projectiles.push(new Bloon(tower.x, tower.y, 10, "rgba(150,150,150,1)", v));
   }, 0);
@@ -304,17 +323,7 @@ function animate() {
   animationId = requestAnimationFrame(animate);
   c.fillStyle = "rgba(80,12,12,1)";
   c.fillRect(0, 0, canvas.width, canvas.height);
-  //? test line
-  c.lineWidth = 35;
-  c.lineJoin = "round";
-  c.beginPath();
-  c.moveTo(enemySpawnX, enemySpawnY);
-  c.lineTo(trackPoints[0].x, trackPoints[0].y);
-  c.lineTo(trackPoints[1].x, trackPoints[1].y);
-  c.lineTo(trackPoints[2].x, trackPoints[2].y);
-
-  c.stroke();
-
+  drawTrack();
   buildAreas.forEach((area, index) => {
     area.draw();
     //todo - check for player collision? test here
@@ -330,14 +339,12 @@ function animate() {
     tower.drawRange();
     let enemiesInRange = [];
     enemies.forEach((enemy, enemyIndex) => {
-      //! calculation here not accurate, not working as expected
       const dist = Math.hypot(enemy.x - tower.x, enemy.y - tower.y);
       if (dist <= tower.range) {
         enemiesInRange.push(enemy);
       }
     });
     if (enemiesInRange.length > 0 && !towerIntervals[towerIndex]) {
-      //todo - can pass enemies here for firing at enemies
       spawnTowerProjectilesNow(tower, towerIndex);
       spawnTowerProjectiles(tower, towerIndex);
     } else if (enemiesInRange.length === 0) {
@@ -378,14 +385,17 @@ function animate() {
       enemies.splice(index, 1);
     }
 
+    // todo - enemies need to be centered in the track
     if (dist - enemy.radius < 0) {
-      // calc dist from next track point
-      enemy.velocity = calculateVelocity(
+      let v = calculateVelocity(
         trackPoints[enemy.trackPoint].x,
         trackPoints[enemy.trackPoint].y,
         trackPoints[enemy.trackPoint + 1].x,
         trackPoints[enemy.trackPoint + 1].y
       );
+      v.x *= 5.5;
+      v.y *= 5.5;
+      enemy.velocity = v;
       enemy.trackPoint++;
     }
 
@@ -448,7 +458,7 @@ function startWave() {
   //spawnProjectiles();
 }
 
-// todo - use e to get button id and determine tower
+// todo - use e to  and determine tower type with button id
 function handleTowerSelect() {
   if (towerSelect) {
     return;
@@ -469,57 +479,9 @@ function towerPlaced(e) {
 
 //? Start Game Button
 window.startGame = startGame;
+window.selectHero;
+window.selectSprayer;
+window.selectAutoShooter;
 startGameBtn.addEventListener("click", introClick);
 startWaveBtn.addEventListener("click", startWave);
 selectHeroBtn.addEventListener("click", handleTowerSelect);
-/*
-towers.forEach((tower, towerIndex) => {
-    tower.draw();
-    let firstBloon = null;
-    if (enemies.length > 0) {
-      enemies.forEach((enemy, enemyIndex) => {
-        if (firstBloon === null) {
-          firstBloon = enemy;
-        } else if ((firstBloon.health = 0)) {
-          firstBloon = enemy;
-        } else if (
-          Math.hypot(
-            firstBloon.x - trackPoints[trackPoints.length - 1].x,
-            firstBloon.y - trackPoints[trackPoints.length - 1].y
-          ) >
-          Math.hypot(
-            enemy.x - trackPoints[trackPoints.length - 1].x,
-            enemy.y - trackPoints[trackPoints.length - 1].y
-          )
-        ) {
-          firstBloon = enemy;
-          console.log(enemy);
-        }
-      });
-
-      const dist = Math.hypot(tower.x - firstBloon.x, tower.y - firstBloon.y);
-      if (dist < tower.range && !towerIntervals[towerIndex]) {
-        towerIntervals[towerIndex] = setInterval(() => {
-          let v = calculateVelocity(
-            tower.x,
-            tower.y,
-            firstBloon.x,
-            firstBloon.y
-          );
-          v.x *= 5.5;
-          v.y *= 5.5;
-
-          projectiles.push(
-            new Bloon(tower.x, tower.y, 10, "rgba(150,150,150,1)", v)
-          );
-        }, projectileSpawnTime);
-      }
-      if (dist > tower.range && towerIntervals[towerIndex]) {
-        clearInterval(towerIntervals[towerIndex]);
-      }
-    } else {
-      console.log("no enemies" + towerIntervals[towerIndex]);
-      firstBloon = null;
-    }
-  });
-*/

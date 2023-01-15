@@ -169,7 +169,7 @@
       z-index: 99;
       background-color: rgba(32, 0, 0, 0.3);
       color: white;
-      font-size: 30px;
+      font-size: 32px;
       border-radius: 0.75rem;
       user-select: none;
       /*cant figure out why it creates a pointer */
@@ -182,9 +182,10 @@
 
     #overlay .buttonGroup {
       display: grid;
-      grid-template-columns: 1fr 1fr 1fr 1fr;
+      grid-template-columns: 1fr 1fr ;
       gap: 12px;
-      font-size: 24px;
+      margin-top: 0.5rem;
+      font-size: 16px;
     }
 
     #overlay button {
