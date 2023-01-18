@@ -75,6 +75,7 @@ let y = canvas.height / 2;
 // todo - Player will get choice: heli or dartling
 let player;
 let playerDmg = 1;
+let towerPurchased;
 let towerSelected;
 let towers = [];
 let towerIntervals = [];
@@ -178,8 +179,8 @@ function handleMouseMove(e) {
   mouseY = e.clientY;
 
   if (towerSelect) {
-    towerSelected.x = e.clientX;
-    towerSelected.y = e.clientY;
+    towerPurchased.x = e.clientX;
+    towerPurchased.y = e.clientY;
   }
 }
 
@@ -330,13 +331,13 @@ function animate() {
   });
 
   if (towerSelect) {
-    towerSelected.draw();
-    towerSelected.drawRange();
+    towerPurchased.draw();
+    towerPurchased.drawRange();
   }
 
   towers.forEach((tower, towerIndex) => {
     tower.draw();
-    tower.drawRange();
+
     let enemiesInRange = [];
     enemies.forEach((enemy, enemyIndex) => {
       const dist = Math.hypot(enemy.x - tower.x, enemy.y - tower.y);
@@ -464,19 +465,32 @@ function handleTowerSelect() {
     return;
   }
   towerSelect = true;
-  towerSelected = new Ball(mouseX, mouseY, 10, "#fff", 150);
+  towerPurchased = new Ball(mouseX, mouseY, 10, "#fff", 150);
   canvas.addEventListener("click", towerPlaced);
 }
 
 function towerPlaced(e) {
-  towerSelected.x = e.clientX;
-  towerSelected.y = e.clientY;
+  towerPurchased.x = e.clientX;
+  towerPurchased.y = e.clientY;
   towerSelect = false;
-  towers.push(towerSelected);
-  towerSelected = {};
+  towers.push(towerPurchased);
+  towerPurchased = {};
+  let towerLength = towers.length - 1;
+  //todo - use e.target.id
+
+  let button = document.createElement("button");
+  button.setAttribute("id", `tower${towerLength}`);
+  button.innerText = `new tower${towerLength}`;
+  button.addEventListener("click", towerButtonClicked);
+  overlay.appendChild(button);
   canvas.removeEventListener("click", towerPlaced);
 }
 
+function towerButtonClicked(e) {
+  towerSelected = towers[e.target.id.replace("tower", "")];
+  let clickedTower = towers[e.target.id.replace("tower", "")];
+  console.log(clickedTower);
+}
 //? Start Game Button
 window.startGame = startGame;
 window.selectHero;
