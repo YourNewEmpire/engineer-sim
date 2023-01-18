@@ -38,8 +38,9 @@ let trackPoints = [
 
 let x = canvas.width / 2;
 let y = canvas.height / 2;
-// todo - Player will get choice: heli or dartling
-let player;
+// todo - hero will get choice: heli or dartling
+let hero;
+// todo - perhaps put in hero class
 let playerDmg = 1;
 let towerPurchased;
 let towerPlacing = false;
@@ -48,6 +49,8 @@ let towerSelecting = false;
 let towers = [];
 let towerIntervals = [];
 let health = 10;
+
+let points = 0;
 let mouseX = null;
 let mouseY = null;
 let enemySpawnX = canvas.width / 1.5;
@@ -73,7 +76,7 @@ healthEl.innerHTML = health;
 // Starting Ball Class
 //todo - add stuff to properties like fire damage, explosive, whatever then compare when projectiles hit
 class Ball {
-  constructor(x, y, radius, color, range) {
+  constructor(x, y, radius, color, range, firingMode) {
     this.x = x;
     this.y = y;
     this.radius = radius;
@@ -81,7 +84,7 @@ class Ball {
     this.range = range;
     this.speedX = 0;
     this.speedY = 0;
-    this.properties = {};
+    this.firingMode = firingMode;
   }
 
   draw() {
@@ -159,7 +162,7 @@ function updatePoints(times = 1) {
 // Reinitializing Variables for Starting a New Game
 function init(gameDifficultyStr) {
   //todo - not clearing build areas after game stop
-  player = new Ball(x, y, 10, "white");
+  hero = new Ball(x, y, 10, "white");
   if (!gameDifficultyStr) {
     return;
   }
@@ -244,14 +247,14 @@ function spawnEnemies() {
   }, spawnTime);
 }
 
-//? Shooting projectiles from player/hero to direction of mouse pos
+//? Shooting projectiles from hero/hero to direction of mouse pos
 function spawnProjectiles() {
-  const dist = Math.hypot(mouseX - player.x, mouseY - player.y);
+  const dist = Math.hypot(mouseX - hero.x, mouseY - hero.y);
   let rand = getRandomArbitrary(0 - dist / 10, 0 + dist / 10);
   spawnProjectilesInterval = setTimeout(() => {
-    let x = player.x;
-    let y = player.y;
-    let v = calculateVelocity(player.x, player.y, mouseX + rand, mouseY + rand);
+    let x = hero.x;
+    let y = hero.y;
+    let v = calculateVelocity(hero.x, hero.y, mouseX + rand, mouseY + rand);
     //todo - Use this in spawnEnemies for enemy speed
     v.x *= 5.5;
     v.y *= 5.5;
@@ -263,8 +266,14 @@ function spawnProjectiles() {
 
 //todo - can pass enemies here for firing at enemies
 function spawnTowerProjectilesNow(tower, towerIndex) {
+  //todo - configure firing mode with tower var
+  // if(tower.firingMode === "sprayer"){
+
+  // }
+  // else if(tower.firingMode === "auto"){
+
+  // }
   setTimeout(() => {
-    //todo - configure firing at enemies and tack shooter clone
     let v = calculateVelocity(tower.x, tower.y, tower.x - 5, tower.y);
     v.x *= 5.5;
     v.y *= 5.5;
@@ -278,8 +287,6 @@ function spawnTowerProjectiles(tower, towerIndex) {
     let v = calculateVelocity(tower.x, tower.y, tower.x - 5, tower.y);
     v.x *= 5.5;
     v.y *= 5.5;
-
-    //todo - push 8 projectiles, all
 
     projectiles.push(new Bloon(tower.x, tower.y, 10, "rgba(150,150,150,1)", v));
     spawnTowerProjectiles(tower, towerIndex);
@@ -295,7 +302,6 @@ function animate() {
   drawTrack();
   buildAreas.forEach((area, index) => {
     area.draw();
-    //todo - check for player collision? test here
   });
 
   if (towerPlacing) {
@@ -312,7 +318,7 @@ function animate() {
     let enemiesInRange = [];
     enemies.forEach((enemy, enemyIndex) => {
       const dist = Math.hypot(enemy.x - tower.x, enemy.y - tower.y);
-      if (dist <= tower.range) {
+      if (dist - enemy.radius <= tower.range) {
         enemiesInRange.push(enemy);
       }
     });
@@ -358,7 +364,8 @@ function animate() {
       enemies.splice(index, 1);
     }
 
-    // todo - enemies need to be centered in the track
+    // todo - enemies need to be centered in the track. Leaving this for now, unsure
+    // todo - enemies also can't arc corners like this
     if (dist - enemy.radius < 0) {
       let v = calculateVelocity(
         trackPoints[enemy.trackPoint].x,
@@ -372,7 +379,7 @@ function animate() {
       enemy.trackPoint++;
     }
 
-    //todo - loop over towers here as well for tower detection
+    //todo - loop over towers here as well if I want enemies that can attack (stun, debuff something)
 
     projectiles.forEach((projectile, projectileIndex) => {
       const dist = Math.hypot(projectile.x - enemy.x, projectile.y - enemy.y);
@@ -406,8 +413,10 @@ function introClick() {
 }
 //? Start New Game
 function startGame(gameDifficulty) {
+  // todo - set bloon speed, and select correct waveEnemies constants
   x = canvas.width / 2;
   y = canvas.height / 2;
+  currentWave = 0;
   canvas.addEventListener("mousemove", handleMouseMove);
   init(gameDifficulty);
   animate();
@@ -436,19 +445,25 @@ function handleTowerSelect() {
   if (towerPlacing) {
     return;
   }
+  /* //todo
+  let towerFireMode;
+if(e.target.id ==="selectAutoShooterBtn"){ towerFireMode = "auto"}
+etc
+  */
   towerPlacing = true;
   towerPurchased = new Ball(mouseX, mouseY, 10, "#fff", 150);
   canvas.addEventListener("click", towerPlaced);
 }
 
 function towerPlaced(e) {
+  //todo - need to check for buildArea & other towers collision and then fill range red. test here
   towerPurchased.x = e.clientX;
   towerPurchased.y = e.clientY;
   towerPlacing = false;
   towers.push(towerPurchased);
   towerPurchased = {};
   let towerLength = towers.length - 1;
-  //todo - use e.target.id
+  //todo - withdraw points
 
   let button = document.createElement("button");
   button.setAttribute("id", `tower${towerLength}`);
@@ -470,6 +485,7 @@ function towerButtonClicked(e) {
     towerSelected = towers[e.target.id.replace("tower", "")];
     towerSelecting = true;
   }
+  //todo - need to display another div
 }
 //? Start Game Button
 window.startGame = startGame;
