@@ -12,41 +12,7 @@ window.addEventListener("resize", () => {
   canvas.height = window.innerHeight;
   stopGame();
 });
-window.addEventListener("keydown", function (e) {
-  myKeys = myKeys || [];
-  myKeys[e.code] = true;
-});
-window.addEventListener("keyup", function (e) {
-  myKeys[e.code] = false;
-});
-// Variables & Constants
-const bloonsHealth = [
-  {
-    health: 1,
-    color: "red",
-  },
-  {
-    health: 2,
-    color: "blue",
-    childs: {
-      red: 1,
-    },
-  },
-  {
-    health: 3,
-    color: "green",
-    childs: {
-      blue: 1,
-    },
-  },
-  {
-    health: 6,
-    color: "pink",
-    childs: {
-      green: 1,
-    },
-  },
-];
+
 const bloonHealth = {
   red: 1,
   blue: 2,
@@ -76,11 +42,12 @@ let y = canvas.height / 2;
 let player;
 let playerDmg = 1;
 let towerPurchased;
+let towerPlacing = false;
 let towerSelected;
+let towerSelecting = false;
 let towers = [];
 let towerIntervals = [];
 let health = 10;
-let towerSelect = false;
 let mouseX = null;
 let mouseY = null;
 let enemySpawnX = canvas.width / 1.5;
@@ -88,7 +55,7 @@ let enemySpawnY = 0;
 let projectiles = [];
 let buildAreas = [];
 let enemies = [];
-let myKeys = [];
+let enemyVelocity = 1;
 let enemiesToSpawn = 0;
 let currentWave = 0;
 let score = 0;
@@ -178,7 +145,7 @@ function handleMouseMove(e) {
   mouseX = e.clientX;
   mouseY = e.clientY;
 
-  if (towerSelect) {
+  if (towerPlacing) {
     towerPurchased.x = e.clientX;
     towerPurchased.y = e.clientY;
   }
@@ -191,6 +158,7 @@ function updatePoints(times = 1) {
 }
 // Reinitializing Variables for Starting a New Game
 function init(gameDifficultyStr) {
+  //todo - not clearing build areas after game stop
   player = new Ball(x, y, 10, "white");
   if (!gameDifficultyStr) {
     return;
@@ -257,8 +225,8 @@ function spawnEnemies() {
       trackPoints[0].y
     );
     //todo - use global enemyVelocity var
-    v.x *= 5.5;
-    v.y *= 5.5;
+    v.x *= enemyVelocity;
+    v.y *= enemyVelocity;
 
     if (enemiesToSpawn > 0) {
       enemies.push(
@@ -330,9 +298,12 @@ function animate() {
     //todo - check for player collision? test here
   });
 
-  if (towerSelect) {
+  if (towerPlacing) {
     towerPurchased.draw();
     towerPurchased.drawRange();
+  }
+  if (towerSelecting) {
+    towerSelected.drawRange();
   }
 
   towers.forEach((tower, towerIndex) => {
@@ -350,6 +321,7 @@ function animate() {
       spawnTowerProjectiles(tower, towerIndex);
     } else if (enemiesInRange.length === 0) {
       clearInterval(towerIntervals[towerIndex]);
+      towerIntervals[towerIndex] = false;
     }
   });
   // Update and remove projectiles
@@ -394,8 +366,8 @@ function animate() {
         trackPoints[enemy.trackPoint + 1].x,
         trackPoints[enemy.trackPoint + 1].y
       );
-      v.x *= 5.5;
-      v.y *= 5.5;
+      v.x *= enemyVelocity;
+      v.y *= enemyVelocity;
       enemy.velocity = v;
       enemy.trackPoint++;
     }
@@ -461,10 +433,10 @@ function startWave() {
 
 // todo - use e to  and determine tower type with button id
 function handleTowerSelect() {
-  if (towerSelect) {
+  if (towerPlacing) {
     return;
   }
-  towerSelect = true;
+  towerPlacing = true;
   towerPurchased = new Ball(mouseX, mouseY, 10, "#fff", 150);
   canvas.addEventListener("click", towerPlaced);
 }
@@ -472,7 +444,7 @@ function handleTowerSelect() {
 function towerPlaced(e) {
   towerPurchased.x = e.clientX;
   towerPurchased.y = e.clientY;
-  towerSelect = false;
+  towerPlacing = false;
   towers.push(towerPurchased);
   towerPurchased = {};
   let towerLength = towers.length - 1;
@@ -487,9 +459,17 @@ function towerPlaced(e) {
 }
 
 function towerButtonClicked(e) {
-  towerSelected = towers[e.target.id.replace("tower", "")];
-  let clickedTower = towers[e.target.id.replace("tower", "")];
-  console.log(clickedTower);
+  if (!towerSelecting) {
+    towerSelected = towers[e.target.id.replace("tower", "")];
+    towerSelecting = true;
+    document.getElementById(e.target.id).focus();
+  } else if (towerSelected === towers[e.target.id.replace("tower", "")]) {
+    towerSelecting = false;
+    document.getElementById(e.target.id).blur();
+  } else {
+    towerSelected = towers[e.target.id.replace("tower", "")];
+    towerSelecting = true;
+  }
 }
 //? Start Game Button
 window.startGame = startGame;
