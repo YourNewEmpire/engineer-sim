@@ -29,10 +29,13 @@
         <span class="ml-1" id="healthEl">0</span>
       </p>
       <div class="buttonGroup">
+        <button onclick="handleHeroSelect('point')">
+          Select Point Shooter
+        </button>
+        <button onclick="handleHeroSelect('heli')">Select Heli</button>
+        <button onclick="handleTowerSelect('spray')">Select Sprayer</button>
+        <button onclick="handleTowerSelect('auto')">Select Auto Shooter</button>
         <button id="startWaveBtn">Start Wave</button>
-        <button id="selectHeroBtn">Select Hero</button>
-        <button id="selectSprayerBtn">Select Sprayer</button>
-        <button id="selectAutoShooterBtn">Select Auto Shooter</button>
       </div>
       <div id="currentTowers" class="buttonGroup"></div>
     </div>
