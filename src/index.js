@@ -65,7 +65,7 @@ let highest = localStorage.getItem("highest") || 0;
 let animationId;
 let spawnEnemiesInterval;
 let spawnProjectilesInterval;
-let projectileSpawnTime = 500;
+let projectileSpawnTime = 700;
 let spawnTime = 300;
 
 // todo re name these vars, organise waves fully, and use highest wave for highestEl.
@@ -75,7 +75,7 @@ healthEl.innerHTML = health;
 // Starting Ball Class
 //todo - add stuff to properties like fire damage, explosive, whatever then compare when projectiles hit
 class Ball {
-  constructor(x, y, radius, color, range, firingMode) {
+  constructor(x, y, radius, color, range, firingMode, properties) {
     this.x = x;
     this.y = y;
     this.radius = radius;
@@ -84,6 +84,7 @@ class Ball {
     this.speedX = 0;
     this.speedY = 0;
     this.firingMode = firingMode;
+    this.properties = properties;
   }
 
   draw() {
@@ -91,6 +92,12 @@ class Ball {
     c.arc(this.x, this.y, this.radius, Math.PI * 2, 0, false);
     c.fillStyle = this.color;
     c.fill();
+
+    // todo - text for tower/hero
+    // c.font = "9px Teko";
+    // c.fillStyle = "#000";
+    // let textX = this.x;
+    // c.fillText("tower", (textX -= 5), this.y);
   }
   drawRange() {
     c.beginPath();
@@ -244,24 +251,7 @@ function spawnEnemies() {
       enemiesToSpawn--;
     }
     spawnEnemies();
-  }, spawnTime);
-}
-
-//? Shooting projectiles from hero/hero to direction of mouse pos
-function spawnProjectiles() {
-  const dist = Math.hypot(mouseX - hero.x, mouseY - hero.y);
-  let rand = getRandomArbitrary(0 - dist / 10, 0 + dist / 10);
-  spawnProjectilesInterval = setTimeout(() => {
-    let x = hero.x;
-    let y = hero.y;
-    let v = calculateVelocity(hero.x, hero.y, mouseX + rand, mouseY + rand);
-    //todo - Use this in spawnEnemies for enemy speed
-    v.x *= 5.5;
-    v.y *= 5.5;
-
-    projectiles.push(new Bloon(x, y, 5, "rgba(150,150,150,1)", v));
-    spawnProjectiles();
-  }, projectileSpawnTime);
+  }, 300);
 }
 
 //todo - can pass enemies here for firing at enemies
@@ -289,9 +279,7 @@ function spawnTowerProjectilesNow(tower, towerIndex, targetEnemy) {
 
       v.x *= 7.5;
       v.y *= 7.5;
-      projectiles.push(
-        new Bloon(tower.x, tower.y, 10, "rgba(150,150,150,1)", v)
-      );
+      projectiles.push(new Bloon(tower.x, tower.y, 5, "red", v));
     }, 0);
   }
 }
@@ -301,15 +289,16 @@ function spawnTowerProjectiles(tower, towerIndex, targetEnemy) {
     towerIntervals[towerIndex] = setTimeout(() => {
       let v = calculateVelocity(tower.x, tower.y, tower.x - 5, tower.y);
       let v2 = calculateVelocity(tower.x, tower.y, tower.x + 5, tower.y);
+
       v.x *= 5.5;
       v.y *= 5.5;
       v2.x *= 5.5;
       v2.y *= 5.5;
       projectiles.push(
-        new Bloon(tower.x, tower.y, 10, "rgba(150,150,150,1)", v)
+        new Bloon(tower.x, tower.y, 5, "rgba(150,150,150,1)", v)
       );
       projectiles.push(
-        new Bloon(tower.x, tower.y, 10, "rgba(150,150,150,1)", v2)
+        new Bloon(tower.x, tower.y, 5, "rgba(150,150,150,1)", v2)
       );
       spawnTowerProjectiles(tower, towerIndex, targetEnemy);
     }, projectileSpawnTime);
@@ -319,25 +308,25 @@ function spawnTowerProjectiles(tower, towerIndex, targetEnemy) {
       v.x *= 7.5;
       v.y *= 7.5;
 
-      projectiles.push(
-        new Bloon(tower.x, tower.y, 10, "rgba(150,150,150,1)", v)
-      );
+      projectiles.push(new Bloon(tower.x, tower.y, 5, "red", v));
       spawnTowerProjectiles(tower, towerIndex, targetEnemy);
     }, projectileSpawnTime);
   }
 }
 
-function spawnHeroProjectiles(tower, towerIndex) {
-  console.log(hero.firingMode);
+function spawnHeroProjectiles() {
+  const dist = Math.hypot(mouseX - hero.x, mouseY - hero.y);
+  let rand = getRandomArbitrary(0 - dist / 10, 0 + dist / 10);
+  heroInterval = setTimeout(() => {
+    let x = hero.x;
+    let y = hero.y;
+    let v = calculateVelocity(hero.x, hero.y, mouseX + rand, mouseY + rand);
+    v.x *= 5.5;
+    v.y *= 5.5;
 
-  // towerIntervals[towerIndex] = setTimeout(() => {
-  //   let v = calculateVelocity(tower.x, tower.y, tower.x - 5, tower.y);
-  //   v.x *= 5.5;
-  //   v.y *= 5.5;
-
-  //   projectiles.push(new Bloon(tower.x, tower.y, 10, "rgba(150,150,150,1)", v));
-  //   spawnTowerProjectiles(tower, towerIndex);
-  // }, projectileSpawnTime);
+    projectiles.push(new Bloon(x, y, 5, "rgba(150,150,150,1)", v));
+    spawnHeroProjectiles();
+  }, hero.properties.fireInterval);
 }
 
 //? Recursive animate func
@@ -361,18 +350,23 @@ function animate() {
   }
   if (hero) {
     hero.draw();
-    if (enemies.length > 0) {
-      spawnHeroProjectiles();
-    }
+    // todo - need to configure heli here
+    // todo - check if heli then loop over enemies
+    // if (enemies.length > 0 && !heroInterval) {
+    //   spawnHeroProjectiles();
+    // } else {
+    //   clearInterval(heroInterval);
+    //   heroInterval = false;
+    // }
   }
   towers.forEach((tower, towerIndex) => {
     tower.draw();
-
     let enemiesInRange = [];
     enemies.forEach((enemy, enemyIndex) => {
       const dist = Math.hypot(enemy.x - tower.x, enemy.y - tower.y);
       if (dist - enemy.radius <= tower.range) {
         enemiesInRange.push(enemy);
+        //todo - test setting tower.enInRange = enemy
       }
     });
     if (enemiesInRange.length > 0 && !towerIntervals[towerIndex]) {
@@ -488,19 +482,21 @@ function startWave() {
   //? increment currentWave state and reset enemy spawn interval
   currentWave++;
   clearInterval(spawnEnemiesInterval);
-  //clearInterval(spawnProjectilesInterval);
+  clearInterval(heroInterval);
   enemiesToSpawn = waveEnemies[currentWave - 1].enemies.length;
   spawnEnemies();
-  //spawnProjectiles();
+  if (hero) {
+    spawnHeroProjectiles();
+  }
 }
-
+// ? When a hero button is clicked
 function handleHeroSelect(fireMode) {
-  if (towerPlacing) {
+  if (towerPlacing || hero) {
     return;
   }
-
+  let obj = { fireMode: fireMode, fireInterval: 400 };
   towerPlacing = true;
-  towerPurchased = new Ball(mouseX, mouseY, 10, "#fff", 150, fireMode);
+  towerPurchased = new Ball(mouseX, mouseY, 25, "#fff", 150, fireMode, obj);
   canvas.addEventListener("click", heroPlaced);
 }
 function heroPlaced(e) {
@@ -510,7 +506,7 @@ function heroPlaced(e) {
   towerPlacing = false;
   hero = towerPurchased;
   towerPurchased = {};
-
+  console.log(hero);
   canvas.removeEventListener("click", heroPlaced);
 }
 // todo - use e to  and determine tower type with button id
@@ -522,7 +518,7 @@ function handleTowerSelect(fireModeArg) {
   //? Using towerPurchased var to store temporary "placing" tower
   //? Set the ball to the mouseX,Y vars to follow mouse until player has picked placement.
   towerPlacing = true;
-  towerPurchased = new Ball(mouseX, mouseY, 10, "#fff", 150, fireModeArg);
+  towerPurchased = new Ball(mouseX, mouseY, 15, "#fff", 150, fireModeArg);
   // ? towerPlacing will be set back to false in towerPlaced function
   canvas.addEventListener("click", towerPlaced);
 }
