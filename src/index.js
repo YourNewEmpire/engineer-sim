@@ -22,7 +22,11 @@ const bloonHealth = {
 const c = canvas.getContext("2d");
 const pointsEl = document.getElementById("pointsEl");
 const overlay = document.getElementById("overlay");
+const towerControls = document.getElementById("towerControls");
+const currentTowers = document.getElementById("currentTowers");
+const towerUpgrades = document.getElementById("towerUpgrades");
 overlay.style.display = "none";
+towerControls.style.display = "none";
 const highestEl = document.getElementById("highestEl");
 const healthEl = document.getElementById("healthEl");
 const startGameBtn = document.getElementById("startGameBtn");
@@ -259,57 +263,63 @@ function spawnEnemies() {
 
 //todo - clean these up fully
 
-function spawnTowerProjectilesNow(tower, towerIndex, targetEnemy) {
+function spawnTowerProjectiles(tower, towerIndex) {
+  //todo - unsure about looping over tower.properties.numOfGuns and adding v to array.
   if (tower.firingMode === "spray") {
+    let v = calculateVelocity(tower.x, tower.y, tower.x - 5, tower.y);
+    let v2 = calculateVelocity(tower.x, tower.y, tower.x + 5, tower.y);
+    let v3 = calculateVelocity(tower.x, tower.y, tower.x, tower.y + 5);
+    let v4 = calculateVelocity(tower.x, tower.y, tower.x, tower.y - 5);
+    v.x *= 5.5;
+    v.y *= 5.5;
+    v2.x *= 5.5;
+    v2.y *= 5.5;
+    v3.x *= 5.5;
+    v3.y *= 5.5;
+    v4.x *= 5.5;
+    v4.y *= 5.5;
     setTimeout(() => {
-      let v = calculateVelocity(tower.x, tower.y, tower.x - 5, tower.y);
-      let v2 = calculateVelocity(tower.x, tower.y, tower.x + 5, tower.y);
-      v.x *= 5.5;
-      v.y *= 5.5;
-      v2.x *= 5.5;
-      v2.y *= 5.5;
-      projectiles.push(
-        new Bloon(tower.x, tower.y, 10, "rgba(150,150,150,1)", v)
-      );
-      projectiles.push(
-        new Bloon(tower.x, tower.y, 10, "rgba(150,150,150,1)", v2)
-      );
-    }, 0);
-  } else if (tower.firingMode === "auto") {
-    setTimeout(() => {
-      let v = calculateVelocity(
-        tower.x,
-        tower.y,
-        enemies[tower.enInRange].x,
-        enemies[tower.enInRange].y
-      );
-
-      v.x *= 7.5;
-      v.y *= 7.5;
-      projectiles.push(new Bloon(tower.x, tower.y, 5, "red", v));
-    }, 0);
-  }
-}
-
-function spawnTowerProjectiles(tower, towerIndex, targetEnemy) {
-  if (tower.firingMode === "spray") {
-    towerIntervals[towerIndex] = setTimeout(() => {
-      let v = calculateVelocity(tower.x, tower.y, tower.x - 5, tower.y);
-      let v2 = calculateVelocity(tower.x, tower.y, tower.x + 5, tower.y);
-
-      v.x *= 5.5;
-      v.y *= 5.5;
-      v2.x *= 5.5;
-      v2.y *= 5.5;
       projectiles.push(
         new Bloon(tower.x, tower.y, 5, "rgba(150,150,150,1)", v)
       );
       projectiles.push(
         new Bloon(tower.x, tower.y, 5, "rgba(150,150,150,1)", v2)
       );
-      spawnTowerProjectiles(tower, towerIndex, targetEnemy);
+      projectiles.push(
+        new Bloon(tower.x, tower.y, 5, "rgba(150,150,150,1)", v3)
+      );
+      projectiles.push(
+        new Bloon(tower.x, tower.y, 5, "rgba(150,150,150,1)", v4)
+      );
+    }, 0);
+    towerIntervals[towerIndex] = setTimeout(() => {
+      projectiles.push(
+        new Bloon(tower.x, tower.y, 5, "rgba(150,150,150,1)", v)
+      );
+      projectiles.push(
+        new Bloon(tower.x, tower.y, 5, "rgba(150,150,150,1)", v2)
+      );
+      projectiles.push(
+        new Bloon(tower.x, tower.y, 5, "rgba(150,150,150,1)", v3)
+      );
+      projectiles.push(
+        new Bloon(tower.x, tower.y, 5, "rgba(150,150,150,1)", v4)
+      );
+      spawnTowerProjectiles(tower, towerIndex);
     }, projectileSpawnTime);
   } else if (tower.firingMode === "auto") {
+    setTimeout(() => {
+      let v = calculateVelocity(
+        tower.x,
+        tower.y,
+        enemies[tower.enInRange].x,
+        enemies[tower.enInRange].y
+      );
+
+      v.x *= 7.5;
+      v.y *= 7.5;
+      projectiles.push(new Bloon(tower.x, tower.y, 5, "red", v));
+    }, 0);
     towerIntervals[towerIndex] = setTimeout(() => {
       let v = calculateVelocity(
         tower.x,
@@ -319,9 +329,9 @@ function spawnTowerProjectiles(tower, towerIndex, targetEnemy) {
       );
       v.x *= 7.5;
       v.y *= 7.5;
-      console.log(tower.enInRange);
+
       projectiles.push(new Bloon(tower.x, tower.y, 5, "red", v));
-      spawnTowerProjectiles(tower, towerIndex, targetEnemy);
+      spawnTowerProjectiles(tower, towerIndex);
     }, projectileSpawnTime);
   }
 }
@@ -466,7 +476,6 @@ function animate() {
       }
     });
     if (enemiesInRange.length > 0 && !towerIntervals[towerIndex]) {
-      spawnTowerProjectilesNow(tower, towerIndex, enemiesInRange[0]);
       spawnTowerProjectiles(tower, towerIndex, enemiesInRange[0]);
     } else if (enemiesInRange.length === 0) {
       clearInterval(towerIntervals[towerIndex]);
@@ -528,20 +537,33 @@ function handleHeroSelect(fireMode) {
 }
 function heroPlaced(e) {
   //todo - need to check for buildArea & other towers collision and then fill range red. test here
-  towerPurchased.x = e.clientX;
-  towerPurchased.y = e.clientY;
-  towerPlacing = false;
-  hero = towerPurchased;
-  towerPurchased = {};
-  console.log(hero);
-  canvas.removeEventListener("click", heroPlaced);
+  let collided;
+  towers.forEach((tower, towerIndex) => {
+    const dist = Math.hypot(e.clientX - tower.x, e.clientY - tower.y);
+    if (dist - towerPurchased.radius - tower.radius < 0) {
+      collided = true;
+    }
+  });
+  if (!collided) {
+    towerPurchased.x = e.clientX;
+    towerPurchased.y = e.clientY;
+    towerPlacing = false;
+    hero = towerPurchased;
+    towerPurchased = {};
+
+    canvas.removeEventListener("click", heroPlaced);
+  }
 }
+
+// todo - add heroButtonClicked and display upgrades
+
 // todo - use e to  and determine tower type with button id
 function handleTowerSelect(fireModeArg) {
   //? towerPlacing boolean is set to true when this is ran
   if (towerPlacing) {
     return;
   }
+  // todo - pass obj to new Ball for properties arg, including fireModeArg as an entry in the obj
   //? Using towerPurchased var to store temporary "placing" tower
   //? Set the ball to the mouseX,Y vars to follow mouse until player has picked placement.
   towerPlacing = true;
@@ -553,13 +575,11 @@ function handleTowerSelect(fireModeArg) {
 function towerPlaced(e) {
   //todo - need to check for buildArea & other towers collision and then fill range red. test here
 
-  //? Set tower x,y to mouse click x,y from click event arg.
+  //? Stop animating/following mouseX/Y & Set towerPurchased x,y to mouse click x,y from click event arg.
   towerPurchased.x = e.clientX;
   towerPurchased.y = e.clientY;
   //? push the new tower to the animated towers array and reset vars
-  towerPlacing = false;
   towers.push(towerPurchased);
-  towerPurchased = {};
   //? Use tower length when creating a button for the tower (essentially want the highest index)
   let towerLength = towers.length - 1;
   //todo - withdraw points, think about correct order of line calls here
@@ -567,20 +587,21 @@ function towerPlaced(e) {
   let button = document.createElement("button");
   //? set id here for towerButtonClicked arg
   button.setAttribute("id", `tower${towerLength}`);
-  button.innerText = `new tower${towerLength + 1}`;
+  button.innerText = `tower${towerLength + 1} (${towerPurchased.firingMode})`;
   button.addEventListener("click", towerButtonClicked);
-  overlay.appendChild(button);
+  towerControls.style.display = "grid";
+  currentTowers.appendChild(button);
   canvas.removeEventListener("click", towerPlaced);
+  towerPlacing = false;
+  towerPurchased = {};
 }
 
 function towerButtonClicked(e) {
   if (!towerSelecting) {
     towerSelected = towers[e.target.id.replace("tower", "")];
     towerSelecting = true;
-    document.getElementById(e.target.id).focus();
   } else if (towerSelected === towers[e.target.id.replace("tower", "")]) {
     towerSelecting = false;
-    document.getElementById(e.target.id).blur();
   } else {
     towerSelected = towers[e.target.id.replace("tower", "")];
     towerSelecting = true;

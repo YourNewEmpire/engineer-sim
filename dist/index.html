@@ -37,7 +37,15 @@
         <button onclick="handleTowerSelect('auto')">Select Auto Shooter</button>
         <button id="startWaveBtn">Start Wave</button>
       </div>
-      <div id="currentTowers" class="buttonGroup"></div>
+
+      <div id="towerControls" class="towerButtons">
+        <div id="currentTowers" style="display: flex; flex-direction: column">
+          <p>Current Towers:</p>
+        </div>
+        <div id="towerUpgrades" style="display: flex; flex-direction: column">
+          <p>Upgrades:</p>
+        </div>
+      </div>
     </div>
 
     <div id="introEl">

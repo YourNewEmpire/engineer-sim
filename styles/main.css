@@ -188,7 +188,13 @@
       margin-top: 0.5rem;
       font-size: 16px;
     }
-
+    #overlay .towerButtons {
+      display: grid;
+      grid-template-columns: 1fr 1fr ;
+      gap: 12px;
+      margin-top: 0.5rem;
+      font-size: 16px;
+    }
     #overlay button {
       width: 100%;
       color: white;
