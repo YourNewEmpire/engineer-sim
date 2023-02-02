@@ -142,9 +142,9 @@ function drawTrack() {
   c.lineJoin = "round";
   c.beginPath();
   c.moveTo(enemySpawnX, enemySpawnY);
-  c.lineTo(trackPoints[0].x, trackPoints[0].y);
-  c.lineTo(trackPoints[1].x, trackPoints[1].y);
-  c.lineTo(trackPoints[2].x, trackPoints[2].y);
+  trackPoints.forEach((t, tIndex) => {
+    c.lineTo(trackPoints[tIndex].x, trackPoints[tIndex].y);
+  });
   c.stroke();
 }
 
@@ -173,8 +173,14 @@ function init(gameDifficultyStr) {
   pointsEl.innerHTML = score;
   highestEl.innerHTML = highest;
   //todo - use global enemyVelocity var
-  //todo - use constants for gameDifficulty % change map accordingly also
+  //todo - use constants for gameDifficulty & change map accordingly also
   if (gameDifficultyStr === "easy") {
+    trackPoints = [
+      { x: canvas.width / 2, y: canvas.height / 4 },
+      { x: canvas.width / 1.5, y: canvas.height / 2 },
+      { x: canvas.width / 2, y: canvas.height / 1.5 },
+      { x: canvas.width / 3, y: canvas.height / 4 },
+    ];
     buildAreas.push(
       new BuildArea(trackPoints[0].x + 75 * 2, trackPoints[0].y, 75),
       new BuildArea(trackPoints[0].x, trackPoints[0].y + 75 * 2, 75),
@@ -254,8 +260,6 @@ function spawnEnemies() {
 //todo - clean these up fully
 
 function spawnTowerProjectilesNow(tower, towerIndex, targetEnemy) {
-  console.log(tower.firingMode);
-  //todo - configure firing mode with tower var
   if (tower.firingMode === "spray") {
     setTimeout(() => {
       let v = calculateVelocity(tower.x, tower.y, tower.x - 5, tower.y);
@@ -348,6 +352,7 @@ function animate() {
   c.fillStyle = "rgba(80,12,12,1)";
   c.fillRect(0, 0, canvas.width, canvas.height);
   drawTrack();
+
   buildAreas.forEach((area, index) => {
     area.draw();
   });
@@ -406,7 +411,6 @@ function animate() {
     }
 
     // todo - enemies need to be centered in the track. Leaving this for now, unsure
-    // todo - enemies also can't arc corners like this
     if (dist - enemy.radius < 0) {
       let v = calculateVelocity(
         trackPoints[enemy.trackPoint].x,

@@ -22,6 +22,15 @@
       outline: none;
     }
 
+    .warning {
+      color: darkorange;
+    }
+    .info {
+      color: lightskyblue;
+    }
+    .success {
+      color: green;
+    }
 /*todo - these classes need to be looked at, not fully DRY code. */
 
     #introEl {
@@ -43,7 +52,7 @@
       box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
       border-radius: 0.5rem;
       width: 100%;
-      max-width: 350px;
+      max-width: 30rem;
       padding: 1.5em;
       background: white;
     }
@@ -78,10 +87,6 @@
 
     #introEl button:active {
       transform: scale(0.9);
-    }
-
-    #introEl .warning {
-      color: darkorange;
     }
 
     #introEl .intro {
@@ -148,10 +153,6 @@
 
     #prepareGameEl button:active {
       transform: scale(0.9);
-    }
-
-    #prepareGameEl .warning {
-      color: darkorange;
     }
 
     #prepareGameEl .intro {
