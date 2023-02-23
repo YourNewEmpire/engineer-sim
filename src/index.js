@@ -1,6 +1,6 @@
 import "../styles/main.css";
 import { calculateVelocity } from "../lib/velocity.js";
-import { waveEnemies } from "../lib/constants.js";
+import { waveEnemies, towerUpgrades } from "../lib/constants.js";
 //? Selecting Canvas and setting width and height
 const canvas = document.querySelector("canvas");
 
@@ -24,7 +24,8 @@ const pointsEl = document.getElementById("pointsEl");
 const overlay = document.getElementById("overlay");
 const towerControls = document.getElementById("towerControls");
 const currentTowers = document.getElementById("currentTowers");
-const towerUpgrades = document.getElementById("towerUpgrades");
+
+const towerUpgradeButtons = document.getElementById("towerUpgradeButtons");
 overlay.style.display = "none";
 towerControls.style.display = "none";
 const highestEl = document.getElementById("highestEl");
@@ -43,7 +44,7 @@ let x = canvas.width / 2;
 let y = canvas.height / 2;
 // todo - hero will get choice: heli or dartling
 let hero;
-// todo - perhaps put in hero class
+// todo - use from hero/tower class properties
 let playerDmg = 1;
 let heroInterval;
 let towerPurchased;
@@ -70,8 +71,6 @@ let highest = localStorage.getItem("highest") || 0;
 let animationId;
 let spawnEnemiesInterval;
 let spawnProjectilesInterval;
-let projectileSpawnTime = 300;
-let spawnTime = 300;
 
 // todo re name these vars, organise waves fully, and use highest wave for highestEl.
 highestEl.innerHTML = highest;
@@ -181,12 +180,13 @@ function init(gameDifficultyStr) {
   if (!gameDifficultyStr) {
     return;
   }
-  //todo - need to clear some missing vars here
+  //todo - need to reset some missing vars here
+  towers = [];
+  towerIntervals = [];
   buildAreas = [];
   projectiles = [];
   enemies = [];
   points = 0;
-  spawnTime = 1000;
   highestEl.innerHTML = highest;
   //todo - use global enemyVelocity var
   //todo - use constants for gameDifficulty & change map accordingly also
@@ -194,7 +194,7 @@ function init(gameDifficultyStr) {
     trackPoints = [
       { x: canvas.width / 2, y: canvas.height / 4 },
       { x: canvas.width / 1.5, y: canvas.height / 2 },
-      { x: canvas.width / 2, y: canvas.height / 1.5 },
+      { x: canvas.width / 4, y: canvas.height / 1.5 },
       { x: canvas.width / 3, y: canvas.height / 4 },
     ];
     buildAreas.push(
@@ -215,11 +215,11 @@ function init(gameDifficultyStr) {
       new BuildArea(trackPoints[0].x - 75, trackPoints[2].y + 75, 75)
     );
   } else if (gameDifficultyStr === "hard") {
-    buildAreas.push(
-      new BuildArea(trackPoints[0].x + 75 * 2, trackPoints[0].y, 75),
-      new BuildArea(trackPoints[0].x, trackPoints[0].y + 75 * 2, 75),
-      new BuildArea(trackPoints[0].x - 75, trackPoints[2].y + 75, 75)
-    );
+    trackPoints = [
+      { x: canvas.width / 2, y: canvas.height / 4 },
+      { x: canvas.width / 1.5, y: canvas.height / 2 },
+      { x: canvas.width / 4, y: canvas.height / 1.5 },
+    ];
   }
 }
 
@@ -290,16 +290,44 @@ function spawnTowerProjectilesNow(tower, towerIndex) {
     v4.y *= 5.5;
     setTimeout(() => {
       projectiles.push(
-        new Shot(tower.x, tower.y, 5, "rgba(150,150,150,1)", v, 1)
+        new Shot(
+          tower.x,
+          tower.y,
+          5,
+          "rgba(150,150,150,1)",
+          v,
+          tower.properties.pierce
+        )
       );
       projectiles.push(
-        new Shot(tower.x, tower.y, 5, "rgba(150,150,150,1)", v2, 1)
+        new Shot(
+          tower.x,
+          tower.y,
+          5,
+          "rgba(150,150,150,1)",
+          v2,
+          tower.properties.pierce
+        )
       );
       projectiles.push(
-        new Shot(tower.x, tower.y, 5, "rgba(150,150,150,1)", v3, 1)
+        new Shot(
+          tower.x,
+          tower.y,
+          5,
+          "rgba(150,150,150,1)",
+          v3,
+          tower.properties.pierce
+        )
       );
       projectiles.push(
-        new Shot(tower.x, tower.y, 5, "rgba(150,150,150,1)", v4, 1)
+        new Shot(
+          tower.x,
+          tower.y,
+          5,
+          "rgba(150,150,150,1)",
+          v4,
+          tower.properties.pierce
+        )
       );
     }, 0);
   } else if (tower.properties.fireMode === "auto") {
@@ -313,7 +341,9 @@ function spawnTowerProjectilesNow(tower, towerIndex) {
 
       v.x *= 7.5;
       v.y *= 7.5;
-      projectiles.push(new Bloon(tower.x, tower.y, 5, "red", v));
+      projectiles.push(
+        new Shot(tower.x, tower.y, 5, "red", v, tower.properties.pierce)
+      );
     }, 0);
   }
 }
@@ -336,16 +366,44 @@ function spawnTowerProjectiles(tower, towerIndex) {
 
     towerIntervals[towerIndex] = setTimeout(() => {
       projectiles.push(
-        new Shot(tower.x, tower.y, 5, "rgba(150,150,150,1)", v, 1)
+        new Shot(
+          tower.x,
+          tower.y,
+          5,
+          "rgba(150,150,150,1)",
+          v,
+          tower.properties.pierce
+        )
       );
       projectiles.push(
-        new Shot(tower.x, tower.y, 5, "rgba(150,150,150,1)", v2, 1)
+        new Shot(
+          tower.x,
+          tower.y,
+          5,
+          "rgba(150,150,150,1)",
+          v2,
+          tower.properties.pierce
+        )
       );
       projectiles.push(
-        new Shot(tower.x, tower.y, 5, "rgba(150,150,150,1)", v3, 1)
+        new Shot(
+          tower.x,
+          tower.y,
+          5,
+          "rgba(150,150,150,1)",
+          v3,
+          tower.properties.pierce
+        )
       );
       projectiles.push(
-        new Shot(tower.x, tower.y, 5, "rgba(150,150,150,1)", v4, 1)
+        new Shot(
+          tower.x,
+          tower.y,
+          5,
+          "rgba(150,150,150,1)",
+          v4,
+          tower.properties.pierce
+        )
       );
       spawnTowerProjectiles(tower, towerIndex);
     }, tower.properties.fireInterval);
@@ -360,7 +418,9 @@ function spawnTowerProjectiles(tower, towerIndex) {
       v.x *= 7.5;
       v.y *= 7.5;
 
-      projectiles.push(new Bloon(tower.x, tower.y, 5, "red", v));
+      projectiles.push(
+        new Shot(tower.x, tower.y, 5, "red", v, tower.properties.pierce)
+      );
       spawnTowerProjectiles(tower, towerIndex);
     }, tower.properties.fireInterval);
   }
@@ -376,7 +436,7 @@ function spawnHeroProjectiles() {
     v.x *= 5.5;
     v.y *= 5.5;
 
-    projectiles.push(new Bloon(x, y, 5, "rgba(150,150,150,1)", v));
+    projectiles.push(new Shot(x, y, 5, "rgba(150,150,150,1)", v, 1));
     spawnHeroProjectiles();
   }, hero.properties.fireInterval);
 }
@@ -478,6 +538,7 @@ function animate() {
       }
       if (dist - enemy.radius - projectile.radius < 0) {
         let allColors = Object.keys(bloonHealth);
+        //? Collect enemy which collided to avoid collision in next frame
         projectile.collided.push(enemy);
         projectile.health--;
         if (enemy.health - playerDmg > 0) {
@@ -509,8 +570,8 @@ function animate() {
         tower.enInRange = "";
       }
     });
+    //todo - spawnProjectilesNow runs everytime not once
     if (enemiesInRange.length > 0 && !towerIntervals[towerIndex]) {
-      spawnTowerProjectilesNow(tower, towerIndex);
       spawnTowerProjectiles(tower, towerIndex);
     } else if (enemiesInRange.length === 0) {
       clearInterval(towerIntervals[towerIndex]);
@@ -525,8 +586,15 @@ function animate() {
 */
 
 function introClick() {
-  introEl.style.display = "none";
+  introEl.style.opacity = 0;
+
+  setTimeout(() => {
+    introEl.style.display = "none";
+  }, 800);
   prepareGameEl.style.display = "flex";
+  setTimeout(() => {
+    prepareGameEl.style.opacity = 1;
+  }, 800);
 }
 
 //? Start New Game when a difficulty button is selected
@@ -550,6 +618,7 @@ function startWave() {
   if (enemies.length > 0) {
     return;
   }
+  //? Clear projectiles collided data.
   projectiles.forEach((proj, ind) => {
     setTimeout(() => {
       proj.collided.splice(0, proj.collided.length);
@@ -584,7 +653,6 @@ function handleHeroSelect(fireModeArg) {
   canvas.addEventListener("click", heroPlaced);
 }
 function heroPlaced(e) {
-  //todo - need to check for buildArea & other towers collision and then fill range red. test here
   let collided;
   towers.forEach((tower, towerIndex) => {
     const dist = Math.hypot(e.clientX - tower.x, e.clientY - tower.y);
@@ -612,12 +680,18 @@ function handleTowerSelect(fireModeArg) {
   if (towerPlacing) {
     return;
   }
+  // todo - use imported const array of obj
   let obj = {
     damage: 1,
     pierce: 2,
     range: 150,
     fireMode: fireModeArg,
-    fireInterval: 400,
+    fireInterval: 300,
+    paths: {
+      a: 0,
+      b: 0,
+      c: 0,
+    },
   };
   //? Using towerPurchased var to store temporary "placing" tower
   //? Set the ball to the mouseX,Y vars to follow mouse until player has picked placement.
@@ -629,7 +703,7 @@ function handleTowerSelect(fireModeArg) {
 }
 
 function towerPlaced(e) {
-  //todo - need to check for buildArea & other towers collision and then fill range red. test here
+  //todo - need to check for buildArea & other towers collision and then fill range red. code started in heroPlaced
 
   //? Stop animating/following mouseX/Y & Set towerPurchased x,y to mouse click x,y from click event arg.
   towerPurchased.x = e.clientX;
@@ -649,22 +723,83 @@ function towerPlaced(e) {
   button.addEventListener("click", towerButtonClicked);
   towerControls.style.display = "grid";
   currentTowers.appendChild(button);
+  //towerUpgrades.appendChild
   canvas.removeEventListener("click", towerPlaced);
   towerPlacing = false;
   towerPurchased = {};
 }
 
+//? When player clicks owned tower button on the overlay div
 function towerButtonClicked(e) {
+  let towerButton = document.getElementById(e.target.id);
+  let towerLength = towers.length - 1;
+  let buttonArr = [];
+  // todo - add event listener for hover to display tooltip
   if (!towerSelecting) {
     towerSelected = towers[e.target.id.replace("tower", "")];
     towerSelecting = true;
+    let pathKeys = Object.keys(towerSelected.properties.paths);
+    for (let i = 0; i < 3; i++) {
+      let button = document.createElement("button");
+      button.setAttribute("id", `path${pathKeys[i]}`);
+
+      button.addEventListener("click", upgradeButtonClicked);
+      button.style.margin = "2px 0px";
+      buttonArr.push(button);
+    }
+    for (const btn of buttonArr) {
+      towerUpgradeButtons.appendChild(btn);
+      btn.innerText = `${btn.id}`;
+    }
+    towerButton.innerText = `tower${towerLength + 1} (${
+      towerSelected.properties.fireMode
+    }) 👁️`;
   } else if (towerSelected === towers[e.target.id.replace("tower", "")]) {
     towerSelecting = false;
+    towerUpgradeButtons.textContent = "";
+    towerButton.innerText = `tower${towerLength + 1} (${
+      towerSelected.properties.fireMode
+    }) `;
+    towerSelected = {};
   } else {
+    let oldSelect = towers.indexOf(towerSelected);
+    let oldButton = document.getElementById("tower" + oldSelect);
+    oldButton.innerText = `tower${towerLength + 1} (${
+      towerSelected.properties.fireMode
+    }) `;
     towerSelected = towers[e.target.id.replace("tower", "")];
     towerSelecting = true;
+    let pathKeys = Object.keys(towerSelected.properties.paths);
+    for (let i = 0; i < 3; i++) {
+      let button = document.createElement("button");
+      button.setAttribute("id", `path${pathKeys[i]}`);
+      button.addEventListener("click", upgradeButtonClicked);
+      button.style.margin = "2px 0px";
+      buttonArr.push(button);
+    }
+    towerUpgradeButtons.textContent = "";
+    for (const btn of buttonArr) {
+      towerUpgradeButtons.appendChild(btn);
+      btn.innerText = `${btn.id}`;
+    }
+    towerButton.innerText = `tower${towerLength + 1} (${
+      towerSelected.properties.fireMode
+    }) 👁️`;
   }
   //todo - need to display another div of tower upgrades
+}
+
+function upgradeButtonClicked(e) {
+  let upgradeKeys = Object.keys(towerUpgrades);
+  let pathLetter = e.target.id.replace("path", "");
+  let towerType = upgradeKeys.find(
+    (type) => type === towerSelected.properties.fireMode
+  );
+  let towerSelectedUpgrades = towerUpgrades[towerSelected.properties.fireMode];
+  let pathSelected = towerSelectedUpgrades[pathLetter];
+  let currentUpgrade = towerSelected.properties.paths[pathLetter];
+  let nextUpgrade = towerSelected.properties.paths[pathLetter] + 1;
+  console.log(pathLetter + currentUpgrade);
 }
 
 //? Listen and et mouse position state. Passed to a canvas event listener for mousemove.

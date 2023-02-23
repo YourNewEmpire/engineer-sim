@@ -34,6 +34,7 @@
 /*todo - these classes need to be looked at, not fully DRY code. */
 
     #introEl {
+      opacity: 1;
       position: fixed;
       top: 0;
       left: 0;
@@ -45,7 +46,7 @@
       align-items: center;
       justify-content: center;
       z-index: 999;
-      transition: all 0.4s ease;
+      transition: all 0.3s ease;
     }
 
     #introEl > div {
@@ -107,10 +108,14 @@
       align-items: center;
       justify-content: center;
       z-index: 999;
+      transition: all 0.3s ease;
+      opacity: 0;
+
     }
 
     #prepareGameEl > div {
       box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+      border-radius: 0.5rem;
       width: 100%;
       max-width: 500px;
       padding: 1.5em;
