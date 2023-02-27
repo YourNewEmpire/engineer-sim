@@ -680,7 +680,7 @@ function handleTowerSelect(fireModeArg) {
   if (towerPlacing) {
     return;
   }
-  // todo - use imported const array of obj
+
   let obj = {
     damage: 1,
     pierce: 2,
@@ -688,9 +688,9 @@ function handleTowerSelect(fireModeArg) {
     fireMode: fireModeArg,
     fireInterval: 300,
     paths: {
-      a: 0,
-      b: 0,
-      c: 0,
+      a: -1,
+      b: -1,
+      c: -1,
     },
   };
   //? Using towerPurchased var to store temporary "placing" tower
@@ -795,14 +795,22 @@ function upgradeButtonClicked(e) {
   let towerType = upgradeKeys.find(
     (type) => type === towerSelected.properties.fireMode
   );
+
   let towerSelectedUpgrades = towerUpgrades[towerSelected.properties.fireMode];
   let pathSelected = towerSelectedUpgrades[pathLetter];
-  let currentUpgrade = towerSelected.properties.paths[pathLetter];
-  let nextUpgrade = towerSelected.properties.paths[pathLetter] + 1;
-  console.log(pathLetter + currentUpgrade);
+  let nextUpgradeIndex = towerSelected.properties.paths[pathLetter] + 1;
+  let nextUpgrade = pathSelected[nextUpgradeIndex];
+  towerSelected.properties = {
+    ...towerSelected.properties,
+    ...nextUpgrade.payload,
+  };
+  towerSelected.properties.paths[pathLetter] += 1;
+
+  //console.log(pathLetter + (currentUpgrade + 1));
+  console.log(towerSelected.properties.paths[pathLetter]);
 }
 
-//? Listen and et mouse position state. Passed to a canvas event listener for mousemove.
+//? Listen and set mouse position state. Passed to a canvas event listener for mousemove.
 function handleMouseMove(e) {
   mouseX = e.clientX;
   mouseY = e.clientY;
