@@ -70,7 +70,6 @@ let score = 0;
 let highest = localStorage.getItem("highest") || 0;
 let animationId;
 let spawnEnemiesInterval;
-let spawnProjectilesInterval;
 
 // todo re name these vars, organise waves fully, and use highest wave for highestEl.
 highestEl.innerHTML = highest;
@@ -132,6 +131,7 @@ class Bloon extends Ball {
   }
 }
 
+// todo - add properties param for health, damage
 class Shot extends Ball {
   constructor(x, y, radius, color, velocity, health) {
     super(x, y, radius, color);
@@ -153,7 +153,31 @@ class BuildArea extends Ball {
     this.color = "#6C9A8B";
   }
 }
-
+//? Only checks for other towers and build areas. Not the hero
+const checkBuildCollision = (mouseEvent) => {
+  let collided;
+  let inBuildArea;
+  towers.forEach((tower, towerIndex) => {
+    const dist = Math.hypot(
+      mouseEvent.clientX - tower.x,
+      mouseEvent.clientY - tower.y
+    );
+    if (dist - towerPurchased.radius - tower.radius < 0) {
+      collided = true;
+    }
+  });
+  buildAreas.forEach((area, areaIndex) => {
+    const dist = Math.hypot(
+      mouseEvent.clientX - area.x,
+      mouseEvent.clientY - area.y
+    );
+    if (dist - area.radius < 0) {
+      inBuildArea = true;
+    }
+  });
+  if (!collided && inBuildArea) return true;
+  else return false;
+};
 function drawTrack() {
   c.lineWidth = 35;
   c.lineJoin = "round";
@@ -186,11 +210,12 @@ function init(gameDifficultyStr) {
   buildAreas = [];
   projectiles = [];
   enemies = [];
-  points = 0;
   highestEl.innerHTML = highest;
   //todo - use global enemyVelocity var
   //todo - use constants for gameDifficulty & change map accordingly also
   if (gameDifficultyStr === "easy") {
+    points = 750;
+
     trackPoints = [
       { x: canvas.width / 2, y: canvas.height / 4 },
       { x: canvas.width / 1.5, y: canvas.height / 2 },
@@ -203,6 +228,7 @@ function init(gameDifficultyStr) {
       new BuildArea(trackPoints[0].x - 75, trackPoints[2].y + 75, 75)
     );
   } else if (gameDifficultyStr === "medium") {
+    points = 500;
     trackPoints = [
       { x: canvas.width / 2, y: canvas.height / 4 },
       { x: canvas.width / 1.5, y: canvas.height / 2 },
@@ -215,18 +241,22 @@ function init(gameDifficultyStr) {
       new BuildArea(trackPoints[0].x - 75, trackPoints[2].y + 75, 75)
     );
   } else if (gameDifficultyStr === "hard") {
+    points = 300;
     trackPoints = [
       { x: canvas.width / 2, y: canvas.height / 4 },
-      { x: canvas.width / 1.5, y: canvas.height / 2 },
-      { x: canvas.width / 4, y: canvas.height / 1.5 },
+      { x: canvas.width / 3, y: canvas.height / 2.5 },
+      { x: canvas.width / 3.5, y: canvas.height / 2.5 },
     ];
+    buildAreas.push(
+      new BuildArea(trackPoints[0].x - 100, trackPoints[0].y - 75, 75),
+      new BuildArea(trackPoints[0].x + 175, trackPoints[0].y, 75)
+    );
   }
 }
 
 // Stop Game
 function stopGame() {
   clearInterval(spawnEnemiesInterval);
-  clearInterval(spawnProjectilesInterval);
   cancelAnimationFrame(animationId); // Exit Animation
   canvas.removeEventListener("mousemove", handleMouseMove);
   introEl.style.display = "flex"; // Dialogue box
@@ -272,81 +302,6 @@ function spawnEnemies() {
 //todo - need set projectile.health to tower.pierce
 
 //todo - clean these up fully, perhaps use switch statement over the tower types
-
-function spawnTowerProjectilesNow(tower, towerIndex) {
-  //todo - unsure about looping over tower.properties.numOfGuns and adding v to array.
-  if (tower.properties.fireMode === "spray") {
-    let v = calculateVelocity(tower.x, tower.y, tower.x - 5, tower.y);
-    let v2 = calculateVelocity(tower.x, tower.y, tower.x + 5, tower.y);
-    let v3 = calculateVelocity(tower.x, tower.y, tower.x, tower.y + 5);
-    let v4 = calculateVelocity(tower.x, tower.y, tower.x, tower.y - 5);
-    v.x *= 5.5;
-    v.y *= 5.5;
-    v2.x *= 5.5;
-    v2.y *= 5.5;
-    v3.x *= 5.5;
-    v3.y *= 5.5;
-    v4.x *= 5.5;
-    v4.y *= 5.5;
-    setTimeout(() => {
-      projectiles.push(
-        new Shot(
-          tower.x,
-          tower.y,
-          5,
-          "rgba(150,150,150,1)",
-          v,
-          tower.properties.pierce
-        )
-      );
-      projectiles.push(
-        new Shot(
-          tower.x,
-          tower.y,
-          5,
-          "rgba(150,150,150,1)",
-          v2,
-          tower.properties.pierce
-        )
-      );
-      projectiles.push(
-        new Shot(
-          tower.x,
-          tower.y,
-          5,
-          "rgba(150,150,150,1)",
-          v3,
-          tower.properties.pierce
-        )
-      );
-      projectiles.push(
-        new Shot(
-          tower.x,
-          tower.y,
-          5,
-          "rgba(150,150,150,1)",
-          v4,
-          tower.properties.pierce
-        )
-      );
-    }, 0);
-  } else if (tower.properties.fireMode === "auto") {
-    setTimeout(() => {
-      let v = calculateVelocity(
-        tower.x,
-        tower.y,
-        enemies[tower.enInRange].x,
-        enemies[tower.enInRange].y
-      );
-
-      v.x *= 7.5;
-      v.y *= 7.5;
-      projectiles.push(
-        new Shot(tower.x, tower.y, 5, "red", v, tower.properties.pierce)
-      );
-    }, 0);
-  }
-}
 
 function spawnTowerProjectiles(tower, towerIndex) {
   //todo - unsure about looping over tower.properties.numOfGuns and adding v to array.
@@ -528,17 +483,18 @@ function animate() {
       enemy.velocity = v;
       enemy.trackPoint++;
     }
-
-    //todo - need to replace playerDmg projectile.health (pierce) and minus the enemy health from it
+    //? In each enemy iteration, loop over the projectiles here to check for collisions, update points etc.
     projectiles.forEach((projectile, projectileIndex) => {
       const dist = Math.hypot(projectile.x - enemy.x, projectile.y - enemy.y);
-      //? When Projectiles touch Enemy
+
+      //? If the enemy has already collided, return and move on to next projectile
       if (projectile.collided.includes(enemy)) {
         return;
       }
+      //? When Projectiles touch Enemy
       if (dist - enemy.radius - projectile.radius < 0) {
         let allColors = Object.keys(bloonHealth);
-        //? Collect enemy which collided to avoid collision in next frame
+        //? Push enemy to collided array to avoid collision in next frame
         projectile.collided.push(enemy);
         projectile.health--;
         if (enemy.health - playerDmg > 0) {
@@ -555,25 +511,41 @@ function animate() {
       }
     });
   });
+  //? loop over towers and draw them. This is where the shooting starts
   towers.forEach((tower, towerIndex) => {
     tower.draw();
-    let enemiesInRange = [];
+    let enemiesInRange = 0;
 
+    //? for each tower, loop over the enemies
     enemies.forEach((enemy, enemyIndex) => {
       const dist = Math.hypot(enemy.x - tower.x, enemy.y - tower.y);
+
+      //? If enemy is in tower range, increment this local enemiesInRange variable
       if (dist - enemy.radius <= tower.properties.range) {
+        /* 
+        ? tower.enInRange is initially undefined
+        ? I use it to store the index of the enemy in range
+        ? crucially, I dont want to set enInRange again in the next iteration.
+        ? so if enInRange isn't a number, it is either undefined (from the start)
+        ? or it is "" which is set below (if the enemy is no longer in range)
+        ? 
+        */
         if (typeof tower.enInRange !== "number") {
+          //? Will use this later in spawnTowerProjectiles
           tower.enInRange = enemyIndex;
         }
-        enemiesInRange.push(enemy);
+        enemiesInRange += 1;
       } else if (enemyIndex === tower.enInRange) {
+        /*
+      ? if not in tower range then check if the enemy is the current enInRange.
+      ? if so, then reset the enInRange var back to something that is not a number
+      */
         tower.enInRange = "";
       }
     });
-    //todo - spawnProjectilesNow runs everytime not once
-    if (enemiesInRange.length > 0 && !towerIntervals[towerIndex]) {
+    if (enemiesInRange > 0 && !towerIntervals[towerIndex]) {
       spawnTowerProjectiles(tower, towerIndex);
-    } else if (enemiesInRange.length === 0) {
+    } else if (enemiesInRange === 0) {
       clearInterval(towerIntervals[towerIndex]);
       //? importantly set the interval to false so it cant be cleared again when this condition is met
       towerIntervals[towerIndex] = false;
@@ -607,7 +579,6 @@ function startGame(gameDifficulty) {
   canvas.addEventListener("mousemove", handleMouseMove);
   init(gameDifficulty);
   animate();
-  clearInterval(spawnProjectilesInterval);
   prepareGameEl.style.display = "none";
   overlay.style.display = "flex";
 }
@@ -638,6 +609,8 @@ function startWave() {
 function handleHeroSelect(fireModeArg) {
   //? if a tower is already being placed, or there already is hero, end here.
   if (towerPlacing || hero) {
+    towerPurchased = {};
+    towerPlacing = false;
     return;
   }
   //? properties to be passed to hero
@@ -652,21 +625,16 @@ function handleHeroSelect(fireModeArg) {
   towerPlacing = true;
   canvas.addEventListener("click", heroPlaced);
 }
+
 function heroPlaced(e) {
-  let collided;
-  towers.forEach((tower, towerIndex) => {
-    const dist = Math.hypot(e.clientX - tower.x, e.clientY - tower.y);
-    if (dist - towerPurchased.radius - tower.radius < 0) {
-      collided = true;
-    }
-  });
-  if (!collided) {
+  let canBuild = checkBuildCollision(e);
+
+  if (canBuild) {
     towerPurchased.x = e.clientX;
     towerPurchased.y = e.clientY;
     towerPlacing = false;
     hero = towerPurchased;
     towerPurchased = {};
-
     canvas.removeEventListener("click", heroPlaced);
   }
 }
@@ -676,10 +644,11 @@ function heroPlaced(e) {
 // todo - towers are currently unlimited, perhaps wont matter if there's not enough cash for player
 //? When a tower purchase button is clicked, use fireModeArg
 function handleTowerSelect(fireModeArg) {
-  //? towerPlacing boolean is set to true when this is ran
-  if (towerPlacing) {
-    return;
-  }
+  //todo - use constant with difficulty adjustment
+  let tempTowerPrices = {
+    auto: 200,
+    spray: 150,
+  };
 
   let obj = {
     damage: 1,
@@ -693,6 +662,19 @@ function handleTowerSelect(fireModeArg) {
       c: -1,
     },
   };
+
+  //? if a tower is already being placed, assume the user wants to cancel
+  if (towerPlacing) {
+    towerPurchased = {};
+    towerPlacing = false;
+    return;
+  }
+
+  //? not enough points? return
+  if (points < tempTowerPrices[obj.fireMode]) {
+    return;
+  }
+
   //? Using towerPurchased var to store temporary "placing" tower
   //? Set the ball to the mouseX,Y vars to follow mouse until player has picked placement.
   towerPurchased = new Ball(mouseX, mouseY, 15, "#fff", obj);
@@ -703,8 +685,17 @@ function handleTowerSelect(fireModeArg) {
 }
 
 function towerPlaced(e) {
-  //todo - need to check for buildArea & other towers collision and then fill range red. code started in heroPlaced
-
+  let canBuild = checkBuildCollision(e);
+  let heroCollided;
+  if (!canBuild) return;
+  //? check for hero collision
+  if (hero) {
+    const dist = Math.hypot(e.clientX - hero.x, e.clientY - hero.y);
+    if (dist - towerPurchased.radius - hero.radius < 0) {
+      heroCollided = true;
+    }
+  }
+  if (heroCollided) return;
   //? Stop animating/following mouseX/Y & Set towerPurchased x,y to mouse click x,y from click event arg.
   towerPurchased.x = e.clientX;
   towerPurchased.y = e.clientY;
@@ -723,7 +714,6 @@ function towerPlaced(e) {
   button.addEventListener("click", towerButtonClicked);
   towerControls.style.display = "grid";
   currentTowers.appendChild(button);
-  //towerUpgrades.appendChild
   canvas.removeEventListener("click", towerPlaced);
   towerPlacing = false;
   towerPurchased = {};
@@ -800,11 +790,14 @@ function upgradeButtonClicked(e) {
   let pathSelected = towerSelectedUpgrades[pathLetter];
   let nextUpgradeIndex = towerSelected.properties.paths[pathLetter] + 1;
   let nextUpgrade = pathSelected[nextUpgradeIndex];
-  towerSelected.properties = {
-    ...towerSelected.properties,
-    ...nextUpgrade.payload,
-  };
-  towerSelected.properties.paths[pathLetter] += 1;
+
+  if (points >= nextUpgrade.price) {
+    towerSelected.properties = {
+      ...towerSelected.properties,
+      ...nextUpgrade.payload,
+    };
+    towerSelected.properties.paths[pathLetter] += 1;
+  }
 
   //console.log(pathLetter + (currentUpgrade + 1));
   console.log(towerSelected.properties.paths[pathLetter]);

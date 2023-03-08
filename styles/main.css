@@ -15,7 +15,7 @@
       width: 100%;
       height: 100%;
       overflow: hidden;
-      background-color: #333333;
+      background-color: rgba(80,12,12,1);
     } 
     
     button:focus {
@@ -23,12 +23,21 @@
     }
 
     .warning {
+      font-weight: 800;
+      text-shadow: 0px 2px 12px darkorange ;
+      letter-spacing: 1px;
       color: darkorange;
     }
     .info {
-      color: lightskyblue;
+      font-weight: 800;
+      text-shadow: 0px 2px 12px deepskyblue ;
+      letter-spacing: 1px;
+      color: deepskyblue;
     }
     .success {
+      font-weight: 800;
+      text-shadow: 0px 2px 12px green ;
+      letter-spacing: 1px;
       color: green;
     }
 /*todo - these classes need to be looked at, not fully DRY code. */
@@ -55,7 +64,7 @@
       width: 100%;
       max-width: 30rem;
       padding: 1.5em;
-      background: white;
+      background: #D6D6D6;
     }
 
     #introEl h1 {
