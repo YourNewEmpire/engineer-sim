@@ -28,7 +28,8 @@ const currentTowers = document.getElementById("currentTowers");
 const towerUpgradeButtons = document.getElementById("towerUpgradeButtons");
 overlay.style.display = "none";
 towerControls.style.display = "none";
-const highestEl = document.getElementById("highestEl");
+// const highestEl = document.getElementById("highestEl");
+const waveEl = document.getElementById("waveEl");
 const healthEl = document.getElementById("healthEl");
 const startGameBtn = document.getElementById("startGameBtn");
 const startWaveBtn = document.getElementById("startWaveBtn");
@@ -39,7 +40,10 @@ let trackPoints = [
   { x: canvas.width / 1.5, y: canvas.height / 2 },
   { x: canvas.width / 4, y: canvas.height / 1.5 },
 ];
-
+let tempTowerPrices = {
+  auto: 200,
+  spray: 150,
+};
 let x = canvas.width / 2;
 let y = canvas.height / 2;
 // todo - hero will get choice: heli or dartling
@@ -70,10 +74,6 @@ let score = 0;
 let highest = localStorage.getItem("highest") || 0;
 let animationId;
 let spawnEnemiesInterval;
-
-// todo re name these vars, organise waves fully, and use highest wave for highestEl.
-highestEl.innerHTML = highest;
-healthEl.innerHTML = health;
 
 // Starting Ball Class
 //todo - add stuff to properties like fire damage, explosive, whatever then compare when projectiles hit
@@ -210,7 +210,6 @@ function init(gameDifficultyStr) {
   buildAreas = [];
   projectiles = [];
   enemies = [];
-  highestEl.innerHTML = highest;
   //todo - use global enemyVelocity var
   //todo - use constants for gameDifficulty & change map accordingly also
   if (gameDifficultyStr === "easy") {
@@ -306,6 +305,10 @@ function spawnEnemies() {
 function spawnTowerProjectiles(tower, towerIndex) {
   //todo - unsure about looping over tower.properties.numOfGuns and adding v to array.
   if (tower.properties.fireMode === "spray") {
+    // let vArr = [];
+    // for (let foo = 0; foo < tower.properties.projNumber / 4; foo++) {
+    //   v;
+    // }
     let v = calculateVelocity(tower.x, tower.y, tower.x - 5, tower.y);
     let v2 = calculateVelocity(tower.x, tower.y, tower.x + 5, tower.y);
     let v3 = calculateVelocity(tower.x, tower.y, tower.x, tower.y + 5);
@@ -403,6 +406,7 @@ function spawnHeroProjectiles() {
 function animate() {
   healthEl.innerHTML = health;
   pointsEl.innerHTML = points;
+  waveEl.innerHTML = currentWave;
   animationId = requestAnimationFrame(animate);
   c.fillStyle = "rgba(80,12,12,1)";
   c.fillRect(0, 0, canvas.width, canvas.height);
@@ -645,17 +649,14 @@ function heroPlaced(e) {
 //? When a tower purchase button is clicked, use fireModeArg
 function handleTowerSelect(fireModeArg) {
   //todo - use constant with difficulty adjustment
-  let tempTowerPrices = {
-    auto: 200,
-    spray: 150,
-  };
 
   let obj = {
     damage: 1,
     pierce: 2,
     range: 150,
+    projNum: 4,
     fireMode: fireModeArg,
-    fireInterval: 300,
+    fireInterval: 350,
     paths: {
       a: -1,
       b: -1,
@@ -715,6 +716,7 @@ function towerPlaced(e) {
   towerControls.style.display = "grid";
   currentTowers.appendChild(button);
   canvas.removeEventListener("click", towerPlaced);
+  points -= tempTowerPrices[towerPurchased.properties.fireMode];
   towerPlacing = false;
   towerPurchased = {};
 }
@@ -739,7 +741,16 @@ function towerButtonClicked(e) {
     }
     for (const btn of buttonArr) {
       towerUpgradeButtons.appendChild(btn);
-      btn.innerText = `${btn.id}`;
+      let pathLetter = btn.id.replace("path", "");
+      let nextUpgradeIndex = towerSelected.properties.paths[pathLetter] + 1;
+      let towerSelectedUpgrades =
+        towerUpgrades[towerSelected.properties.fireMode];
+      let pathSelected = towerSelectedUpgrades[pathLetter];
+      let nextUpgrade = pathSelected[nextUpgradeIndex];
+
+      btn.innerText = `${
+        nextUpgrade.name + "\n" + nextUpgrade.price + " points"
+      }`;
     }
     towerButton.innerText = `tower${towerLength + 1} (${
       towerSelected.properties.fireMode
@@ -770,7 +781,16 @@ function towerButtonClicked(e) {
     towerUpgradeButtons.textContent = "";
     for (const btn of buttonArr) {
       towerUpgradeButtons.appendChild(btn);
-      btn.innerText = `${btn.id}`;
+      let pathLetter = btn.id.replace("path", "");
+      let nextUpgradeIndex = towerSelected.properties.paths[pathLetter] + 1;
+      let towerSelectedUpgrades =
+        towerUpgrades[towerSelected.properties.fireMode];
+      let pathSelected = towerSelectedUpgrades[pathLetter];
+      let nextUpgrade = pathSelected[nextUpgradeIndex];
+
+      btn.innerText = `${
+        nextUpgrade.name + "\n" + nextUpgrade.price + " points"
+      }`;
     }
     towerButton.innerText = `tower${towerLength + 1} (${
       towerSelected.properties.fireMode
@@ -780,6 +800,7 @@ function towerButtonClicked(e) {
 }
 
 function upgradeButtonClicked(e) {
+  let upgradeButton = document.getElementById(e.target.id);
   let upgradeKeys = Object.keys(towerUpgrades);
   let pathLetter = e.target.id.replace("path", "");
   let towerType = upgradeKeys.find(
@@ -788,15 +809,21 @@ function upgradeButtonClicked(e) {
 
   let towerSelectedUpgrades = towerUpgrades[towerSelected.properties.fireMode];
   let pathSelected = towerSelectedUpgrades[pathLetter];
-  let nextUpgradeIndex = towerSelected.properties.paths[pathLetter] + 1;
-  let nextUpgrade = pathSelected[nextUpgradeIndex];
+  let upgradeIndex = towerSelected.properties.paths[pathLetter] + 1;
+  let upgrade = pathSelected[upgradeIndex];
 
-  if (points >= nextUpgrade.price) {
+  if (points >= upgrade.price) {
     towerSelected.properties = {
       ...towerSelected.properties,
-      ...nextUpgrade.payload,
+      ...upgrade.payload,
     };
     towerSelected.properties.paths[pathLetter] += 1;
+    let nextUpgradeIndex = towerSelected.properties.paths[pathLetter] + 1;
+    let nextUpgrade = pathSelected[nextUpgradeIndex];
+
+    upgradeButton.innerText = `${
+      nextUpgrade.name + "\n" + nextUpgrade.price + " points"
+    }`;
   }
 
   //console.log(pathLetter + (currentUpgrade + 1));
