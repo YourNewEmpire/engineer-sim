@@ -299,70 +299,51 @@ function spawnEnemies() {
 }
 
 //todo - need set projectile.health to tower.pierce
-
+function calcSprayProjectiles(t) {
+  if (t.properties.paths.c === -1) {
+    let velArr = [
+      calculateVelocity(t.x, t.y, t.x - 5, t.y),
+      calculateVelocity(t.x, t.y, t.x + 5, t.y),
+      calculateVelocity(t.x, t.y, t.x, t.y - 5),
+      calculateVelocity(t.x, t.y, t.x, t.y + 5),
+      calculateVelocity(t.x, t.y, t.x + 5, t.y - 5),
+      calculateVelocity(t.x, t.y, t.x + 5, t.y + 5),
+      calculateVelocity(t.x, t.y, t.x - 5, t.y - 5),
+      calculateVelocity(t.x, t.y, t.x - 5, t.y + 5),
+    ];
+    const retArr = velArr.map((v) => {
+      return {
+        x: (v.x *= 5),
+        y: (v.y *= 5),
+      };
+    });
+    return retArr;
+  }
+}
 //todo - clean these up fully, perhaps use switch statement over the tower types
 
 function spawnTowerProjectiles(tower, towerIndex) {
   //todo - unsure about looping over tower.properties.numOfGuns and adding v to array.
-  if (tower.properties.fireMode === "spray") {
-    // let vArr = [];
-    // for (let foo = 0; foo < tower.properties.projNumber / 4; foo++) {
-    //   v;
-    // }
-    let v = calculateVelocity(tower.x, tower.y, tower.x - 5, tower.y);
-    let v2 = calculateVelocity(tower.x, tower.y, tower.x + 5, tower.y);
-    let v3 = calculateVelocity(tower.x, tower.y, tower.x, tower.y + 5);
-    let v4 = calculateVelocity(tower.x, tower.y, tower.x, tower.y - 5);
-    v.x *= 5.5;
-    v.y *= 5.5;
-    v2.x *= 5.5;
-    v2.y *= 5.5;
-    v3.x *= 5.5;
-    v3.y *= 5.5;
-    v4.x *= 5.5;
-    v4.y *= 5.5;
 
+  if (tower.properties.fireMode === "spray") {
+    // import constant of
+    let oldV = calculateVelocity(tower.x, tower.y, tower.x - 5, tower.y);
+    let vArr = calcSprayProjectiles(tower);
+    let projs = [];
+    for (const el of vArr) {
+      projs.push(
+        new Shot(
+          tower.x,
+          tower.y,
+          5,
+          "rgba(150,150,150,1)",
+          el,
+          tower.properties.pierce
+        )
+      );
+    }
     towerIntervals[towerIndex] = setTimeout(() => {
-      projectiles.push(
-        new Shot(
-          tower.x,
-          tower.y,
-          5,
-          "rgba(150,150,150,1)",
-          v,
-          tower.properties.pierce
-        )
-      );
-      projectiles.push(
-        new Shot(
-          tower.x,
-          tower.y,
-          5,
-          "rgba(150,150,150,1)",
-          v2,
-          tower.properties.pierce
-        )
-      );
-      projectiles.push(
-        new Shot(
-          tower.x,
-          tower.y,
-          5,
-          "rgba(150,150,150,1)",
-          v3,
-          tower.properties.pierce
-        )
-      );
-      projectiles.push(
-        new Shot(
-          tower.x,
-          tower.y,
-          5,
-          "rgba(150,150,150,1)",
-          v4,
-          tower.properties.pierce
-        )
-      );
+      projectiles.push(...projs);
       spawnTowerProjectiles(tower, towerIndex);
     }, tower.properties.fireInterval);
   } else if (tower.properties.fireMode === "auto") {
@@ -652,8 +633,8 @@ function handleTowerSelect(fireModeArg) {
 
   let obj = {
     damage: 1,
-    pierce: 2,
-    range: 150,
+    pierce: 1,
+    range: fireModeArg === "spray" ? 110 : 150,
     projNum: 4,
     fireMode: fireModeArg,
     fireInterval: 350,
