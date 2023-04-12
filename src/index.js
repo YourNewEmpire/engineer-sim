@@ -207,7 +207,7 @@ function init(gameDifficultyStr) {
   //todo - use global enemyVelocity var
   //todo - use constants for gameDifficulty & change map accordingly also
   if (gameDifficultyStr === "easy") {
-    points = 750;
+    points = 600;
 
     trackPoints = [
       { x: canvas.width / 2, y: canvas.height / 4 },
@@ -221,7 +221,7 @@ function init(gameDifficultyStr) {
       new BuildArea(trackPoints[0].x - 75, trackPoints[2].y + 75, 75)
     );
   } else if (gameDifficultyStr === "medium") {
-    points = 2000;
+    points = 450;
     trackPoints = [
       { x: canvas.width / 2, y: canvas.height / 4 },
       { x: canvas.width / 1.5, y: canvas.height / 2 },
