@@ -49,7 +49,6 @@ let y = canvas.height / 2;
 // todo - hero will get choice: heli or dartling
 let hero;
 // todo - use from hero/tower class properties
-let playerDmg = 1;
 let heroInterval;
 let towerPurchased;
 let towerPlacing = false;
@@ -133,10 +132,11 @@ class Bloon extends Ball {
 
 // todo - add properties param for health, damage
 class Shot extends Ball {
-  constructor(x, y, radius, color, velocity, health) {
+  constructor(x, y, radius, color, velocity, health, damage) {
     super(x, y, radius, color);
     this.velocity = velocity;
     this.health = health;
+    this.damage = damage;
     this.collided = [];
   }
 
@@ -193,12 +193,6 @@ function getRandomArbitrary(min, max) {
   return Math.random() * (max - min) + min;
 }
 
-//? Run this when player towers hit & kill enemies
-//todo - rework how scoring works in the game
-function updatePoints(times = 1) {
-  points += 1 * times;
-}
-
 //? Reinitialize the vars for new game, some imported constants being used
 function init(gameDifficultyStr) {
   if (!gameDifficultyStr) {
@@ -227,7 +221,7 @@ function init(gameDifficultyStr) {
       new BuildArea(trackPoints[0].x - 75, trackPoints[2].y + 75, 75)
     );
   } else if (gameDifficultyStr === "medium") {
-    points = 500;
+    points = 2000;
     trackPoints = [
       { x: canvas.width / 2, y: canvas.height / 4 },
       { x: canvas.width / 1.5, y: canvas.height / 2 },
@@ -271,7 +265,7 @@ function stopGame() {
 function spawnEnemies() {
   //? Spawn a enemy every spawnTime
   spawnEnemiesInterval = setTimeout(() => {
-    const radius = 10;
+    const radius = 12.5;
     let v = calculateVelocity(
       enemySpawnX,
       enemySpawnY,
@@ -298,8 +292,12 @@ function spawnEnemies() {
   }, waveEnemies[currentWave - 1].spawnTime);
 }
 
-//todo - need set projectile.health to tower.pierce
+//? Dirty function - I am not good enough at maths to make this beautiful
+//? i just return a bigger array if the spray tower is upgraded more on path c
+
 function calcSprayProjectiles(t) {
+  let circum = 2 * Math.PI * t.radius;
+  console.log(circum);
   if (t.properties.paths.c === -1) {
     let velArr = [
       calculateVelocity(t.x, t.y, t.x - 5, t.y),
@@ -311,6 +309,39 @@ function calcSprayProjectiles(t) {
       calculateVelocity(t.x, t.y, t.x - 5, t.y - 5),
       calculateVelocity(t.x, t.y, t.x - 5, t.y + 5),
     ];
+    //? Set velocity.
+    const retArr = velArr.map((v) => {
+      return {
+        x: (v.x *= 5),
+        y: (v.y *= 5),
+      };
+    });
+    return retArr;
+  }
+  if (t.properties.paths.c === 0) {
+    let tenthPerc = circum / 10;
+    let velArr = [
+      //? north and south
+      calculateVelocity(t.x, t.y, t.x, t.y - 5),
+      calculateVelocity(t.x, t.y, t.x, t.y + 5),
+      //? top right
+      calculateVelocity(t.x, t.y, t.x + tenthPerc, t.y - 5),
+      //? just below top right
+      calculateVelocity(t.x, t.y, t.x + 5, t.y - tenthPerc),
+      //? just above bottom right
+      calculateVelocity(t.x, t.y, t.x + 5, t.y + tenthPerc),
+      //? bottom right
+      calculateVelocity(t.x, t.y, t.x + tenthPerc, t.y + 5),
+      //? bottom left
+      calculateVelocity(t.x, t.y, t.x - tenthPerc, t.y + 5),
+      //? just above bottom left
+      calculateVelocity(t.x, t.y, t.x - 5, t.y + tenthPerc),
+      //? just below top left
+      calculateVelocity(t.x, t.y, t.x - 5, t.y - tenthPerc),
+      //? top left
+      calculateVelocity(t.x, t.y, t.x - tenthPerc, t.y - 5),
+    ];
+    //? Set velocity.
     const retArr = velArr.map((v) => {
       return {
         x: (v.x *= 5),
@@ -326,8 +357,6 @@ function spawnTowerProjectiles(tower, towerIndex) {
   //todo - unsure about looping over tower.properties.numOfGuns and adding v to array.
 
   if (tower.properties.fireMode === "spray") {
-    // import constant of
-    let oldV = calculateVelocity(tower.x, tower.y, tower.x - 5, tower.y);
     let vArr = calcSprayProjectiles(tower);
     let projs = [];
     for (const el of vArr) {
@@ -338,7 +367,8 @@ function spawnTowerProjectiles(tower, towerIndex) {
           5,
           "rgba(150,150,150,1)",
           el,
-          tower.properties.pierce
+          tower.properties.pierce,
+          tower.properties.damage
         )
       );
     }
@@ -347,7 +377,7 @@ function spawnTowerProjectiles(tower, towerIndex) {
       spawnTowerProjectiles(tower, towerIndex);
     }, tower.properties.fireInterval);
   } else if (tower.properties.fireMode === "auto") {
-    towerIntervals[towerIndex] = setTimeout(() => {
+    towerIntervals[towerIndex] = setTimeout(function () {
       let v = calculateVelocity(
         tower.x,
         tower.y,
@@ -358,7 +388,15 @@ function spawnTowerProjectiles(tower, towerIndex) {
       v.y *= 7.5;
 
       projectiles.push(
-        new Shot(tower.x, tower.y, 5, "red", v, tower.properties.pierce)
+        new Shot(
+          tower.x,
+          tower.y,
+          5,
+          "red",
+          v,
+          tower.properties.pierce,
+          tower.properties.damage
+        )
       );
       spawnTowerProjectiles(tower, towerIndex);
     }, tower.properties.fireInterval);
@@ -482,13 +520,13 @@ function animate() {
         //? Push enemy to collided array to avoid collision in next frame
         projectile.collided.push(enemy);
         projectile.health--;
-        if (enemy.health - playerDmg > 0) {
-          updatePoints();
-          enemy.health -= playerDmg;
+        if (enemy.health - projectile.damage > 0) {
+          points += 1;
+          enemy.health -= projectile.damage;
           enemy.color = allColors[enemy.health - 1];
         } else {
           //handle enemy kill
-          updatePoints(2);
+          points += 1;
           setTimeout(() => {
             enemies.splice(index, 1);
           }, 0);
@@ -500,14 +538,14 @@ function animate() {
   towers.forEach((tower, towerIndex) => {
     tower.draw();
     let enemiesInRange = 0;
+    if (enemies.length > 0) {
+      //? for each tower, loop over the enemies
+      enemies.forEach((enemy, enemyIndex) => {
+        const dist = Math.hypot(enemy.x - tower.x, enemy.y - tower.y);
 
-    //? for each tower, loop over the enemies
-    enemies.forEach((enemy, enemyIndex) => {
-      const dist = Math.hypot(enemy.x - tower.x, enemy.y - tower.y);
-
-      //? If enemy is in tower range, increment this local enemiesInRange variable
-      if (dist - enemy.radius <= tower.properties.range) {
-        /* 
+        //? If enemy is in tower range, increment this local enemiesInRange variable
+        if (dist - enemy.radius <= tower.properties.range) {
+          /* 
         ? tower.enInRange is initially undefined
         ? I use it to store the index of the enemy in range
         ? crucially, I dont want to set enInRange again in the next iteration.
@@ -515,22 +553,28 @@ function animate() {
         ? or it is "" which is set below (if the enemy is no longer in range)
         ? 
         */
-        if (typeof tower.enInRange !== "number") {
-          //? Will use this later in spawnTowerProjectiles
-          tower.enInRange = enemyIndex;
-        }
-        enemiesInRange += 1;
-      } else if (enemyIndex === tower.enInRange) {
-        /*
+          if (typeof tower.enInRange !== "number") {
+            //? Will use this later in spawnTowerProjectiles
+            tower.enInRange = enemyIndex;
+          }
+          enemiesInRange += 1;
+        } else if (enemyIndex === tower.enInRange) {
+          /*
       ? if not in tower range then check if the enemy is the current enInRange.
       ? if so, then reset the enInRange var back to something that is not a number
       */
-        tower.enInRange = "";
+          tower.enInRange = "";
+        }
+      });
+      if (enemiesInRange > 0 && !towerIntervals[towerIndex]) {
+        console.log(enemiesInRange);
+        spawnTowerProjectiles(tower, towerIndex);
+      } else if (enemiesInRange === 0) {
+        clearInterval(towerIntervals[towerIndex]);
+        //? importantly set the interval to false so it cant be cleared again when this condition is met
+        towerIntervals[towerIndex] = false;
       }
-    });
-    if (enemiesInRange > 0 && !towerIntervals[towerIndex]) {
-      spawnTowerProjectiles(tower, towerIndex);
-    } else if (enemiesInRange === 0) {
+    } else {
       clearInterval(towerIntervals[towerIndex]);
       //? importantly set the interval to false so it cant be cleared again when this condition is met
       towerIntervals[towerIndex] = false;
@@ -635,7 +679,9 @@ function handleTowerSelect(fireModeArg) {
     damage: 1,
     pierce: 1,
     range: fireModeArg === "spray" ? 110 : 150,
-    projNum: 4,
+    //todo - projSize: 10,
+    //todo - projNum: 3,
+    // todo - projSpeed (multiplying when calcVelocity is used)
     fireMode: fireModeArg,
     fireInterval: 350,
     paths: {
@@ -707,7 +753,7 @@ function towerButtonClicked(e) {
   let towerButton = document.getElementById(e.target.id);
   let towerLength = towers.length - 1;
   let buttonArr = [];
-  // todo - add event listener for hover to display tooltip
+  // todo - add event listener for hover to display tooltip containing upgrade desc
   if (!towerSelecting) {
     towerSelected = towers[e.target.id.replace("tower", "")];
     towerSelecting = true;
@@ -777,7 +823,6 @@ function towerButtonClicked(e) {
       towerSelected.properties.fireMode
     }) 👁️`;
   }
-  //todo - need to display another div of tower upgrades
 }
 
 function upgradeButtonClicked(e) {
@@ -791,9 +836,11 @@ function upgradeButtonClicked(e) {
   let towerSelectedUpgrades = towerUpgrades[towerSelected.properties.fireMode];
   let pathSelected = towerSelectedUpgrades[pathLetter];
   let upgradeIndex = towerSelected.properties.paths[pathLetter] + 1;
+
   let upgrade = pathSelected[upgradeIndex];
 
   if (points >= upgrade.price) {
+    points -= upgrade.price;
     towerSelected.properties = {
       ...towerSelected.properties,
       ...upgrade.payload,
@@ -801,10 +848,13 @@ function upgradeButtonClicked(e) {
     towerSelected.properties.paths[pathLetter] += 1;
     let nextUpgradeIndex = towerSelected.properties.paths[pathLetter] + 1;
     let nextUpgrade = pathSelected[nextUpgradeIndex];
-
-    upgradeButton.innerText = `${
-      nextUpgrade.name + "\n" + nextUpgrade.price + " points"
-    }`;
+    if (!nextUpgrade) {
+      upgradeButton.innerText = `${"Path" + "\n" + "complete"}`;
+    } else {
+      upgradeButton.innerText = `${
+        nextUpgrade.name + "\n" + nextUpgrade.price + " points"
+      }`;
+    }
   }
 
   //console.log(pathLetter + (currentUpgrade + 1));
