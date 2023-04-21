@@ -1,7 +1,6 @@
 # Engineer Defence
 
-dirty attempt at tower defence game based on bloons and made with vanilla js and canvas, no image assets
+dirty attempt at tower defence game based on bloons and made with vanilla js and html canvas, no image assets currently.
 
 feel free to make suggestions
-
-I would like to port this to maybe svelte or react one day, if I want to go really deep with it.
+[Inspired by this post on codingdeekshi by Selva](https://codingdeekshi.com/build-a-html5-canvas-bubble-shooter-game-in-browser-using-css3-and-javascript/)
