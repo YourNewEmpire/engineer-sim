@@ -32,7 +32,7 @@
         <button onclick="handleHeroSelect('point')">
           Select Point Shooter Hero
         </button>
-        <button>heli hero wip</button>
+        <button disabled>Heli Coming Soon</button>
         <button onclick="handleTowerSelect('spray')">Select Sprayer</button>
         <button onclick="handleTowerSelect('auto')">Select Auto Shooter</button>
         <button id="startWaveBtn">Start Wave</button>
@@ -55,15 +55,15 @@
     <div id="introEl">
       <div>
         <button id="startGameBtn" class="styledButton">Start Game</button>
-
         <p class="intro">
-          Welcome to Engineer Defence. An attempted bloons clone.
+          Welcome to Engineer Defence. A tower defence game built with JS and
+          html canvas.
         </p>
-
         <p>
           <span class="info">HELPFUL: </span>
-          Blue areas represent places to build towers/hero. When placing a
-          tower, click any tower button again to cancel the build/purchase.
+          Light blue areas <span class="buildArea"></span> represent places to
+          build towers/hero. When placing a tower, click any tower button again
+          to cancel the build/purchase.
         </p>
         <p>
           <span class="success">UPCOMING: </span>
@@ -73,11 +73,6 @@
         <p>
           <span class="success">UPCOMING: </span>
           Cash bonus at end of round, once the economy and towers are balanced
-        </p>
-        <p>
-          <span class="success">UPCOMING: </span>
-          tower upgrade description will be displayed on hover of upgrade, to
-          explain the upgrade.
         </p>
         <p>
           <span class="warning">WARNING: </span>

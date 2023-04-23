@@ -1,240 +1,287 @@
-
+:root {
+  --primary-color: #752112;
+}
 
 * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      font-family: Teko;
-      line-height: 1;
-  }
-    body {
-      overflow: hidden;
-    }
-    
-    canvas {
-      width: 100%;
-      height: 100%;
-      overflow: hidden;
-      background-color: rgba(80,12,12,1);
-    } 
-    
-    button:focus {
-      outline: none;
-    }
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: Teko;
+  line-height: 1;
+}
+body {
+  overflow: hidden;
+}
 
-    .warning {
-      font-weight: 800;
-      text-shadow: 0px 2px 12px darkorange ;
-      letter-spacing: 1px;
-      color: darkorange;
-    }
-    .info {
-      font-weight: 800;
-      text-shadow: 0px 2px 12px deepskyblue ;
-      letter-spacing: 1px;
-      color: deepskyblue;
-    }
-    .success {
-      font-weight: 800;
-      text-shadow: 0px 2px 12px green ;
-      letter-spacing: 1px;
-      color: green;
-    }
+canvas {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background-color: #500c0c;
+}
+
+button:disabled {
+}
+.buildArea {
+  margin: 0 2px;
+  border-radius: 100%;
+  width: 1.25em;
+  display: inline-block;
+  height: 1.25em;
+  background-color: #6c9a8b;
+}
+.warning {
+  font-weight: 800;
+  text-shadow: 0px 2px 12px darkorange;
+  letter-spacing: 1px;
+  color: darkorange;
+}
+.info {
+  font-weight: 800;
+  text-shadow: 0px 2px 12px deepskyblue;
+  letter-spacing: 1px;
+  color: deepskyblue;
+}
+.success {
+  font-weight: 800;
+  text-shadow: 0px 2px 12px green;
+  letter-spacing: 1px;
+  color: green;
+}
 /*todo - these classes need to be looked at, not fully DRY code. */
 
-    #introEl {
-      opacity: 1;
-      position: fixed;
-      top: 0;
-      left: 0;
-      bottom: 0;
-      right: 0;
-      text-align: center;
-      overflow: hidden;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 999;
-      transition: all 0.3s ease;
-    }
+#introEl {
+  visibility: visible;
+  opacity: 1;
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  right: 0;
+  text-align: center;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+  transition: all 0.3s ease;
+}
 
-    #introEl > div {
-      box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
-      border-radius: 0.5rem;
-      width: 100%;
-      max-width: 30rem;
-      padding: 1.5em;
-      background: #D6D6D6;
-    }
+#introEl > div {
+  box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1),
+    0 8px 10px -6px rgb(0 0 0 / 0.1);
+  border-radius: 0.5rem;
+  width: 100%;
+  max-width: 30rem;
+  padding: 1.5em;
+  background: #d6d6d6;
+}
 
-    #introEl h1 {
-      font-size: 3em;
-      font-weight: 600;
-    }
+#introEl h1 {
+  font-size: 3em;
+  font-weight: 600;
+}
 
-    #introEl p {
-      color: #752112;
-      font-size: 18px;
-      margin-top: 1rem;
-    }
+#introEl p {
+  color: var(--primary-color);
+  font-size: 18px;
+  margin-top: 1rem;
+}
 
-    #introEl button {
-      width: 100%;
-      border: none;
-      color: white;
-      cursor: pointer;
-      border-radius: 0.5rem;
-      padding: 1em;
-      background: #752112;
-      font-size: 24px;
-      transition: all 0.2s ease;
-    }
+#introEl button {
+  width: 100%;
+  border: none;
+  color: white;
+  cursor: pointer;
+  border-radius: 0.5rem;
+  padding: 1em;
+  background: var(--primary-color);
+  font-size: 24px;
+  transition: all 0.2s ease;
+}
 
-    #introEl button:hover {
-      background: #320000;
-      border-radius: 0.25rem;
-      box-shadow: 0px 0px 6px #000;
-    }
+#introEl button:hover {
+  background: #320000;
+  border-radius: 0.25rem;
+  box-shadow: 0px 0px 6px #000;
+}
 
-    #introEl button:active {
-      transform: scale(0.9);
-    }
+#introEl button:active {
+  transform: scale(0.9);
+}
 
-    #introEl .intro {
-      font-weight: 800;
-      font-size: 24px;
-    }
-    
-    #prepareGameEl {
-      position: fixed;
-      top: 0;
-      left: 0;
-      bottom: 0;
-      right: 0;
-      padding: 1em;
-      text-align: center;
-      overflow: hidden;
-      display: none;
-      align-items: center;
-      justify-content: center;
-      z-index: 999;
-      transition: all 0.3s ease;
-      opacity: 0;
+#introEl .intro {
+  font-weight: 800;
+  font-size: 24px;
+}
 
-    }
+#prepareGameEl {
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  right: 0;
+  padding: 1em;
+  text-align: center;
+  overflow: hidden;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+}
 
-    #prepareGameEl > div {
-      box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
-      border-radius: 0.5rem;
-      width: 100%;
-      max-width: 500px;
-      padding: 1.5em;
-      background: white;
-    }
+#prepareGameEl > div {
+  box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1),
+    0 8px 10px -6px rgb(0 0 0 / 0.1);
+  border-radius: 0.5rem;
+  width: 100%;
+  max-width: 500px;
+  padding: 1.5em;
+  background: #d6d6d6;
+}
 
-    #prepareGameEl h1 {
-      font-size: 3em;
-      font-weight: 600;
-    }
+#prepareGameEl h1 {
+  font-size: 3em;
+  font-weight: 600;
+}
 
-    #prepareGameEl p {
-      color: #752112;
-      font-size: 18px;
-      margin-top: 1rem;
-    }
+#prepareGameEl p {
+  color: var(--primary-color);
+  font-size: 18px;
+  margin-top: 1rem;
+}
 
-    #prepareGameEl .buttonGroup {
-      display: grid;
-      grid-template-columns: 1fr 1fr 1fr;
-      gap: 12px;
-    }
+#prepareGameEl .buttonGroup {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 12px;
+}
 
-    #prepareGameEl button {
-      width: 100%;
-      border: none;
-      color: white;
-      cursor: pointer;
-      border-radius: 0.5rem;
-      padding: 1em;
-      background: #752112;
-      font-size: 24px;
-      transition: all 0.2s ease;
-    }
+#prepareGameEl button {
+  width: 100%;
+  border: none;
+  color: white;
+  cursor: pointer;
+  border-radius: 0.5rem;
+  padding: 1em;
+  background: var(--primary-color);
+  font-size: 24px;
+  transition: all 0.2s ease;
+}
 
-    #prepareGameEl button:hover {
-      background: #320000;
-      border-radius: 0.25rem;
-      box-shadow: 0px 0px 6px #000;
-      
-    }
+#prepareGameEl button:hover {
+  background: #320000;
+  border-radius: 0.25rem;
+  box-shadow: 0px 0px 6px #000;
+}
 
-    #prepareGameEl button:active {
-      transform: scale(0.9);
-    }
+#prepareGameEl button:active {
+  transform: scale(0.9);
+}
 
-    #prepareGameEl .intro {
-      font-weight: 800;
-      font-size: 24px;
-    }
-    
-    /*? overlay in-game element */
-    #overlay {
-      position: fixed; 
-      display:flex;
-      flex-direction: column;
-      column-gap: 12px;
-      padding: 5px;
-      z-index: 99;
-      background-color: rgba(32, 0, 0, 0.3);
-      color: white;
-      font-size: 32px;
-      border-radius: 0.75rem;
-      user-select: none;
-      /*cant figure out why it creates a pointer */
-      cursor: default;
-    }
+#prepareGameEl .intro {
+  font-weight: 800;
+  font-size: 24px;
+}
 
-    #overlay p {
-      display: inline-block;
-    }
+/*? overlay in-game element */
+#overlay {
+  position: fixed;
+  display: flex;
+  flex-direction: column;
+  column-gap: 12px;
+  padding: 5px;
+  z-index: 99;
+  color: var(--primary-color);
+  background-color: #d6d6d6;
+  font-size: 32px;
+  border-radius: 0.75rem;
+  user-select: none;
+  /*cant figure out why it creates a pointer */
+  cursor: default;
+}
 
-    #overlay .buttonGroup {
-      display: grid;
-      grid-template-columns: 1fr 1fr ;
-      gap: 12px;
-      margin-top: 0.5rem;
-      font-size: 20px;
-    }
-    #overlay .towerButtons {
-      display: grid;
-      grid-template-columns: 1fr 1fr ;
-      gap: 12px;
-      margin-top: 0.5rem;
-      font-size: 16px;
-    }
-    #overlay button {
-      width: 100%;
-      color: white;
-      cursor: pointer;
-      border-radius: 0.5rem;
-      border: none;
-      padding: 0.75rem;
-      background: #752112;
-      font-size: inherit;
-      box-sizing: border-box;   
-      -webkit-box-sizing: border-box; 
-      -moz-box-sizing: border-box;  
-      transition: all 0.2s ease;
-    }
+#overlay p {
+  display: inline-block;
+}
 
-    #overlay button:hover {
-      background: #320000;
-      border-radius: 0.25rem;
-      box-shadow: 0px 0px 6px #752112;
-    }
+#overlay .buttonGroup {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-top: 0.5rem;
+  font-size: 22px;
+}
+#overlay .towerButtons {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-top: 0.5rem;
+  font-size: 16px;
+}
+#overlay button {
+  width: 100%;
+  color: white;
+  cursor: pointer;
+  border-radius: 0.5rem;
+  border: none;
+  padding: 0.75rem;
+  background: var(--primary-color);
+  font-size: inherit;
+  box-sizing: border-box;
+  -webkit-box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  transition: all 0.2s ease;
+}
 
-    #overlay button:active {
-      transform: scale(0.9);
-    }
-  
-    
+#overlay button:hover {
+  background: #320000;
+  border-radius: 0.25rem;
+  box-shadow: 0px 0px 6px var(--primary-color);
+}
+
+#overlay button:active {
+  transform: scale(0.9);
+}
+
+#overlay button:disabled {
+  background: #320000;
+  cursor: not-allowed;
+}
+.tooltip {
+  position: relative;
+  display: inline-block;
+  cursor: pointer;
+}
+
+.tooltiptext {
+  visibility: hidden;
+  background-color: black;
+  color: #fff;
+  text-align: center;
+  border-radius: 6px;
+  padding: 5px 10px;
+  position: absolute;
+  z-index: 200;
+  bottom: 125%;
+  left: 0;
+  font-size: 22px;
+  width: 100%;
+}
+
+.tooltip .tooltiptext::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  margin-left: -5px;
+  border-width: 5px;
+  border-style: solid;
+  border-color: black transparent transparent transparent;
+}
+
+.tooltip:hover .tooltiptext {
+  visibility: visible;
+
+  color: #fff;
+}

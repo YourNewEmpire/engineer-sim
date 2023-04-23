@@ -1,6 +1,10 @@
 import "../styles/main.css";
 import { calculateVelocity } from "../lib/velocity.js";
-import { waveEnemies, towerUpgrades } from "../lib/constants.js";
+import {
+  waveEnemies,
+  towerUpgrades,
+  allTowerPrices,
+} from "../lib/constants.js";
 //? Selecting Canvas and setting width and height
 const canvas = document.querySelector("canvas");
 
@@ -10,7 +14,9 @@ canvas.height = window.innerHeight;
 window.addEventListener("resize", () => {
   canvas.width = window.innerWidth;
   canvas.height = window.innerHeight;
-  stopGame();
+  window.location.reload();
+  //todo - fix stopgame function for better ux
+  // stopGame();
 });
 
 const bloonHealth = {
@@ -28,7 +34,6 @@ const currentTowers = document.getElementById("currentTowers");
 const towerUpgradeButtons = document.getElementById("towerUpgradeButtons");
 overlay.style.display = "none";
 towerControls.style.display = "none";
-// const highestEl = document.getElementById("highestEl");
 const waveEl = document.getElementById("waveEl");
 const healthEl = document.getElementById("healthEl");
 const startGameBtn = document.getElementById("startGameBtn");
@@ -40,7 +45,7 @@ let trackPoints = [
   { x: canvas.width / 1.5, y: canvas.height / 2 },
   { x: canvas.width / 4, y: canvas.height / 1.5 },
 ];
-let tempTowerPrices = {
+let towerPrices = {
   auto: 200,
   spray: 150,
 };
@@ -181,6 +186,7 @@ const checkBuildCollision = (mouseEvent) => {
 function drawTrack() {
   c.lineWidth = 35;
   c.lineJoin = "round";
+  c.strokeStyle = "rgb(96, 64, 32)";
   c.beginPath();
   c.moveTo(enemySpawnX, enemySpawnY);
   trackPoints.forEach((t, tIndex) => {
@@ -204,11 +210,11 @@ function init(gameDifficultyStr) {
   buildAreas = [];
   projectiles = [];
   enemies = [];
-  //todo - use global enemyVelocity var
+  towerPrices = allTowerPrices[gameDifficultyStr];
+
   //todo - use constants for gameDifficulty & change map accordingly also
   if (gameDifficultyStr === "easy") {
-    points = 600;
-
+    points = 800;
     trackPoints = [
       { x: canvas.width / 2, y: canvas.height / 4 },
       { x: canvas.width / 1.5, y: canvas.height / 2 },
@@ -221,20 +227,19 @@ function init(gameDifficultyStr) {
       new BuildArea(trackPoints[0].x - 75, trackPoints[2].y + 75, 75)
     );
   } else if (gameDifficultyStr === "medium") {
-    points = 450;
+    points = 650;
     trackPoints = [
       { x: canvas.width / 2, y: canvas.height / 4 },
       { x: canvas.width / 1.5, y: canvas.height / 2 },
       { x: canvas.width / 4, y: canvas.height / 1.5 },
     ];
-
     buildAreas.push(
       new BuildArea(trackPoints[0].x + 75 * 2, trackPoints[0].y, 75),
       new BuildArea(trackPoints[0].x, trackPoints[0].y + 75 * 2, 75),
       new BuildArea(trackPoints[0].x - 75, trackPoints[2].y + 75, 75)
     );
   } else if (gameDifficultyStr === "hard") {
-    points = 300;
+    points = 500;
     trackPoints = [
       { x: canvas.width / 2, y: canvas.height / 4 },
       { x: canvas.width / 3, y: canvas.height / 2.5 },
@@ -250,10 +255,10 @@ function init(gameDifficultyStr) {
 // Stop Game
 function stopGame() {
   clearInterval(spawnEnemiesInterval);
-  cancelAnimationFrame(animationId); // Exit Animation
+  cancelAnimationFrame(animationId);
   canvas.removeEventListener("mousemove", handleMouseMove);
-  introEl.style.display = "flex"; // Dialogue box
-  overlay.style.display = "none"; // score and highest
+  introEl.style.display = "flex";
+  overlay.style.display = "none";
   if (points > highest) {
     highest = score;
     localStorage.setItem("highest", highest);
@@ -293,11 +298,12 @@ function spawnEnemies() {
 }
 
 //? Dirty function - I am not good enough at maths to make this beautiful
-//? i just return a bigger array if the spray tower is upgraded more on path c
+//? i just return a hard coded array for whatever a spray tower is upgraded to.
 
 function calcSprayProjectiles(t) {
   let circum = 2 * Math.PI * t.radius;
   console.log(circum);
+  //? the stock sprayer
   if (t.properties.paths.c === -1) {
     let velArr = [
       calculateVelocity(t.x, t.y, t.x - 5, t.y),
@@ -318,6 +324,7 @@ function calcSprayProjectiles(t) {
     });
     return retArr;
   }
+  //? first upgrade, and so on
   if (t.properties.paths.c === 0) {
     let tenthPerc = circum / 10;
     let velArr = [
@@ -405,7 +412,7 @@ function spawnTowerProjectiles(tower, towerIndex) {
 
 function spawnHeroProjectiles() {
   const dist = Math.hypot(mouseX - hero.x, mouseY - hero.y);
-  let rand = getRandomArbitrary(0 - dist / 10, 0 + dist / 10);
+  let rand = getRandomArbitrary(0 - dist / 8, 0 + dist / 8);
   heroInterval = setTimeout(() => {
     let x = hero.x;
     let y = hero.y;
@@ -413,7 +420,7 @@ function spawnHeroProjectiles() {
     v.x *= 5.5;
     v.y *= 5.5;
 
-    projectiles.push(new Shot(x, y, 5, "rgba(150,150,150,1)", v, 1));
+    projectiles.push(new Shot(x, y, 5, "rgb(178, 142, 59)", v, 1));
     spawnHeroProjectiles();
   }, hero.properties.fireInterval);
 }
@@ -514,14 +521,13 @@ function animate() {
       if (projectile.collided.includes(enemy)) {
         return;
       }
-      //? When Projectiles touch Enemy
+      //? When Projectiles touch Enemies
       if (dist - enemy.radius - projectile.radius < 0) {
         let allColors = Object.keys(bloonHealth);
         //? Push enemy to collided array to avoid collision in next frame
         projectile.collided.push(enemy);
         projectile.health--;
         if (enemy.health - projectile.damage > 0) {
-          points += 1;
           enemy.health -= projectile.damage;
           enemy.color = allColors[enemy.health - 1];
         } else {
@@ -588,14 +594,9 @@ function animate() {
 
 function introClick() {
   introEl.style.opacity = 0;
+  introEl.style.visibility = "hidden";
 
-  setTimeout(() => {
-    introEl.style.display = "none";
-  }, 800);
   prepareGameEl.style.display = "flex";
-  setTimeout(() => {
-    prepareGameEl.style.opacity = 1;
-  }, 800);
 }
 
 //? Start New Game when a difficulty button is selected
@@ -646,9 +647,9 @@ function handleHeroSelect(fireModeArg) {
   let obj = {
     damage: 1,
     pierce: 2,
-    range: 150,
+    range: 0,
     fireMode: fireModeArg,
-    fireInterval: 400,
+    fireInterval: 375,
   };
   towerPurchased = new Ball(mouseX, mouseY, 25, "#fff", obj);
   towerPlacing = true;
@@ -699,7 +700,7 @@ function handleTowerSelect(fireModeArg) {
   }
 
   //? not enough points? return
-  if (points < tempTowerPrices[obj.fireMode]) {
+  if (points < towerPrices[obj.fireMode]) {
     return;
   }
 
@@ -743,25 +744,25 @@ function towerPlaced(e) {
   towerControls.style.display = "grid";
   currentTowers.appendChild(button);
   canvas.removeEventListener("click", towerPlaced);
-  points -= tempTowerPrices[towerPurchased.properties.fireMode];
+  points -= towerPrices[towerPurchased.properties.fireMode];
   towerPlacing = false;
   towerPurchased = {};
 }
 
+//todo - clean wetness.
 //? When player clicks owned tower button on the overlay div
 function towerButtonClicked(e) {
   let towerButton = document.getElementById(e.target.id);
   let towerLength = towers.length - 1;
   let buttonArr = [];
-  // todo - add event listener for hover to display tooltip containing upgrade desc
   if (!towerSelecting) {
     towerSelected = towers[e.target.id.replace("tower", "")];
     towerSelecting = true;
     let pathKeys = Object.keys(towerSelected.properties.paths);
     for (let i = 0; i < 3; i++) {
       let button = document.createElement("button");
+      button.setAttribute("class", "tooltip");
       button.setAttribute("id", `path${pathKeys[i]}`);
-
       button.addEventListener("click", upgradeButtonClicked);
       button.style.margin = "2px 0px";
       buttonArr.push(button);
@@ -774,10 +775,14 @@ function towerButtonClicked(e) {
         towerUpgrades[towerSelected.properties.fireMode];
       let pathSelected = towerSelectedUpgrades[pathLetter];
       let nextUpgrade = pathSelected[nextUpgradeIndex];
-
-      btn.innerText = `${
-        nextUpgrade.name + "\n" + nextUpgrade.price + " points"
-      }`;
+      if (!nextUpgrade) {
+        btn.innerText = `${"Path" + "\n" + "complete"}`;
+      } else {
+        btn.innerText = `${
+          nextUpgrade.name + "\n" + nextUpgrade.price + " points"
+        }`;
+        btn.innerHTML += `<span class="tooltiptext">${nextUpgrade.desc}</span>`;
+      }
     }
     towerButton.innerText = `tower${towerLength + 1} (${
       towerSelected.properties.fireMode
@@ -800,6 +805,7 @@ function towerButtonClicked(e) {
     let pathKeys = Object.keys(towerSelected.properties.paths);
     for (let i = 0; i < 3; i++) {
       let button = document.createElement("button");
+      button.setAttribute("class", "tooltip");
       button.setAttribute("id", `path${pathKeys[i]}`);
       button.addEventListener("click", upgradeButtonClicked);
       button.style.margin = "2px 0px";
@@ -814,10 +820,14 @@ function towerButtonClicked(e) {
         towerUpgrades[towerSelected.properties.fireMode];
       let pathSelected = towerSelectedUpgrades[pathLetter];
       let nextUpgrade = pathSelected[nextUpgradeIndex];
-
-      btn.innerText = `${
-        nextUpgrade.name + "\n" + nextUpgrade.price + " points"
-      }`;
+      if (!nextUpgrade) {
+        btn.innerText = `${"Path" + "\n" + "complete"}`;
+      } else {
+        btn.innerText = `${
+          nextUpgrade.name + "\n" + nextUpgrade.price + " points"
+        }`;
+        btn.innerHTML += `<span class="tooltiptext">${nextUpgrade.desc}</span>`;
+      }
     }
     towerButton.innerText = `tower${towerLength + 1} (${
       towerSelected.properties.fireMode
@@ -829,16 +839,18 @@ function upgradeButtonClicked(e) {
   let upgradeButton = document.getElementById(e.target.id);
   let upgradeKeys = Object.keys(towerUpgrades);
   let pathLetter = e.target.id.replace("path", "");
-  let towerType = upgradeKeys.find(
-    (type) => type === towerSelected.properties.fireMode
-  );
+  // let towerType = upgradeKeys.find(
+  //   (type) => type === towerSelected.properties.fireMode
+  // );
 
   let towerSelectedUpgrades = towerUpgrades[towerSelected.properties.fireMode];
   let pathSelected = towerSelectedUpgrades[pathLetter];
   let upgradeIndex = towerSelected.properties.paths[pathLetter] + 1;
 
   let upgrade = pathSelected[upgradeIndex];
-
+  if (!upgrade) {
+    return;
+  }
   if (points >= upgrade.price) {
     points -= upgrade.price;
     towerSelected.properties = {
@@ -858,7 +870,7 @@ function upgradeButtonClicked(e) {
   }
 
   //console.log(pathLetter + (currentUpgrade + 1));
-  console.log(towerSelected.properties.paths[pathLetter]);
+  // console.log(towerSelected.properties.paths[pathLetter]);
 }
 
 //? Listen and set mouse position state. Passed to a canvas event listener for mousemove.
