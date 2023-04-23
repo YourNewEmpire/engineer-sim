@@ -78,7 +78,6 @@ let score = 0;
 let highest = localStorage.getItem("highest") || 0;
 let animationId;
 let spawnEnemiesInterval;
-
 // Starting Ball Class
 //todo - add stuff to properties like fire damage, explosive, whatever then compare when projectiles hit
 class Ball {
@@ -533,6 +532,7 @@ function animate() {
         } else {
           //handle enemy kill
           points += 1;
+
           setTimeout(() => {
             enemies.splice(index, 1);
           }, 0);
@@ -616,10 +616,11 @@ function startGame(gameDifficulty) {
 //? Start Wave
 function startWave() {
   //? return so that this code cannot be ran when there are still current enemies
-  if (enemies.length > 0) {
+  if (enemiesToSpawn > 0) {
     return;
   }
-  //? Clear projectiles collided data.
+  // todo - dont think i need this
+
   projectiles.forEach((proj, ind) => {
     setTimeout(() => {
       proj.collided.splice(0, proj.collided.length);
