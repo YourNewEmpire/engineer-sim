@@ -74,6 +74,7 @@ let enemies = [];
 let enemyVelocity = 1;
 let enemiesToSpawn = 0;
 let currentWave = 0;
+let waveEnded;
 let score = 0;
 let highest = localStorage.getItem("highest") || 0;
 let animationId;
@@ -459,6 +460,10 @@ function animate() {
     //   heroInterval = false;
     // }
   }
+  if (enemies.length + enemiesToSpawn === 0 && waveEnded === false) {
+    waveEnded = true;
+    points += 100;
+  }
 
   //? Update and remove projectiles
   projectiles.forEach((projectile, index) => {
@@ -619,6 +624,7 @@ function startWave() {
   if (enemiesToSpawn > 0) {
     return;
   }
+
   // todo - dont think i need this
 
   projectiles.forEach((proj, ind) => {
@@ -635,6 +641,7 @@ function startWave() {
   if (hero) {
     spawnHeroProjectiles();
   }
+  waveEnded = false;
 }
 // ? When a hero button is clicked
 function handleHeroSelect(fireModeArg) {

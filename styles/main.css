@@ -1,5 +1,7 @@
 :root {
   --primary-color: #752112;
+  --bg-color: #500c0c;
+  --text-size: 1.25rem;
 }
 
 * {
@@ -17,11 +19,12 @@ canvas {
   width: 100%;
   height: 100%;
   overflow: hidden;
-  background-color: #500c0c;
+  background-color: #320000;
 }
 
 button:disabled {
 }
+
 .buildArea {
   margin: 0 2px;
   border-radius: 100%;
@@ -30,26 +33,29 @@ button:disabled {
   height: 1.25em;
   background-color: #6c9a8b;
 }
+
 .warning {
   font-weight: 800;
   text-shadow: 0px 2px 12px darkorange;
   letter-spacing: 1px;
   color: darkorange;
 }
+
 .info {
   font-weight: 800;
   text-shadow: 0px 2px 12px deepskyblue;
   letter-spacing: 1px;
   color: deepskyblue;
 }
+
 .success {
   font-weight: 800;
   text-shadow: 0px 2px 12px green;
   letter-spacing: 1px;
   color: green;
 }
-/*todo - these classes need to be looked at, not fully DRY code. */
 
+/*todo - these classes need to be looked at, not fully DRY code. */
 #introEl {
   visibility: visible;
   opacity: 1;
@@ -84,7 +90,7 @@ button:disabled {
 
 #introEl p {
   color: var(--primary-color);
-  font-size: 18px;
+  font-size: var(--text-size);
   margin-top: 1rem;
 }
 
@@ -147,7 +153,7 @@ button:disabled {
 
 #prepareGameEl p {
   color: var(--primary-color);
-  font-size: 18px;
+  font-size: var(--text-size);
   margin-top: 1rem;
 }
 
