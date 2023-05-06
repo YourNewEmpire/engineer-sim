@@ -158,6 +158,7 @@ class BuildArea extends Ball {
     this.color = "#6C9A8B";
   }
 }
+// todo - check for collision with hero
 //? Only checks for other towers and build areas. Not the hero
 const checkBuildCollision = (mouseEvent) => {
   let collided;
@@ -302,7 +303,6 @@ function spawnEnemies() {
 
 function calcSprayProjectiles(t) {
   let circum = 2 * Math.PI * t.radius;
-  console.log(circum);
   //? the stock sprayer
   if (t.properties.paths.c === -1) {
     let velArr = [
@@ -525,6 +525,7 @@ function animate() {
       if (projectile.collided.includes(enemy)) {
         return;
       }
+      // todo - code for rainbow bloon
       //? When Projectiles touch Enemies
       if (dist - enemy.radius - projectile.radius < 0) {
         let allColors = Object.keys(bloonHealth);
@@ -578,7 +579,6 @@ function animate() {
         }
       });
       if (enemiesInRange > 0 && !towerIntervals[towerIndex]) {
-        console.log(enemiesInRange);
         spawnTowerProjectiles(tower, towerIndex);
       } else if (enemiesInRange === 0) {
         clearInterval(towerIntervals[towerIndex]);
@@ -621,7 +621,7 @@ function startGame(gameDifficulty) {
 //? Start Wave
 function startWave() {
   //? return so that this code cannot be ran when there are still current enemies
-  if (enemiesToSpawn > 0) {
+  if (enemiesToSpawn > 0 || enemies.length > 0) {
     return;
   }
 
@@ -637,6 +637,9 @@ function startWave() {
   clearInterval(spawnEnemiesInterval);
   clearInterval(heroInterval);
   enemiesToSpawn = waveEnemies[currentWave - 1].enemies.length;
+  if (!enemiesToSpawn) {
+    window.location.reload();
+  }
   spawnEnemies();
   if (hero) {
     spawnHeroProjectiles();
@@ -874,6 +877,7 @@ function upgradeButtonClicked(e) {
       upgradeButton.innerText = `${
         nextUpgrade.name + "\n" + nextUpgrade.price + " points"
       }`;
+      upgradeButton.innerHTML += `<span class="tooltiptext">${nextUpgrade.desc}</span>`;
     }
   }
 
