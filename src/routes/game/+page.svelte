@@ -6,6 +6,7 @@
     towerUpgrades,
     allTowerPrices,
   } from "$lib/constants.js";
+  import { goto } from "$app/navigation";
   const bloonHealth = {
     red: 1,
     blue: 2,
@@ -44,7 +45,6 @@
   let mouseY = null;
   let enemySpawnX: number;
   let enemySpawnY: number;
-  let enemyProjectileCollided = [];
   let projectiles = [];
   let buildAreas = [];
   let enemies = [];
@@ -52,9 +52,10 @@
   let enemiesToSpawn = 0;
   let currentWave = 0;
   let waveEnded = true;
-  let score = 0;
   let animationId: number;
   let spawnEnemiesInterval;
+
+  // Svelte onMount and reactive statements
   onMount(() => {
     //@ts-ignore
 
@@ -62,12 +63,30 @@
       if (animationId) cancelAnimationFrame(animationId);
     };
   });
-  let towerSelectedUpgrades;
+  // let towerSelectedUpgrades;
   let pathKeys;
-  $: if (towerSelected) {
-    towerSelectedUpgrades = towerUpgrades[towerSelected.properties.fireMode];
+  type Upgrade = {
+    name: string;
+    desc: string;
+    price: number;
+    payload: object;
+  };
+  let upgradeButtons: Upgrade[];
+  $: if (towerSelecting) {
+    let paths = towerUpgrades[towerSelected.properties.fireMode];
+
+    let a = paths.a[towerSelected.properties.paths["a"] + 1];
+    let b = paths.b[towerSelected.properties.paths["b"] + 1];
+    let c = paths.c[towerSelected.properties.paths["c"] + 1];
+
     pathKeys = Object.keys(towerSelected.properties.paths);
+    upgradeButtons = [a, b, c];
+  } else {
+    upgradeButtons = [];
+    pathKeys = [];
   }
+
+  // Classes
   class Ball {
     x: number;
     y: number;
@@ -281,7 +300,7 @@
         new BuildArea(trackPoints[2].x, trackPoints[2].y + 100, 75)
       );
     } else if (gameDifficultyStr === "medium") {
-      points = 650;
+      points = 50000;
       trackPoints = [
         { x: canvas.width / 2, y: canvas.height / 4 },
         { x: canvas.width / 1.5, y: canvas.height / 2 },
@@ -731,7 +750,7 @@
     towerPurchased.x = e.clientX;
     towerPurchased.y = e.clientY;
     //? push the new tower to the animated towers array and reset vars
-    towers.push(towerPurchased);
+    towers = [...towers, towerPurchased];
     //? Use tower length when creating a button for the tower (essentially want the highest index)
     //todo - withdraw points, think about correct order of line calls here
 
@@ -742,9 +761,38 @@
   }
 
   function towerButtonClicked(tIndex: number) {
+    if (towers[tIndex] === towerSelected) {
+      towerSelected = {};
+      towerSelecting = false;
+      return;
+    }
+
     towerSelected = towers[tIndex];
-    towerSelecting = !towerSelecting;
+    towerSelecting = true;
     //todo - do the upgrade
+  }
+
+  function upgradeButtonClicked(pKey) {
+    let towerSelectedUpgrades =
+      towerUpgrades[towerSelected.properties.fireMode];
+    let pathSelected = towerSelectedUpgrades[pKey];
+    let upgradeIndex = towerSelected.properties.paths[pKey] + 1;
+
+    let upgrade = pathSelected[upgradeIndex];
+    if (!upgrade) {
+      return;
+    }
+    if (points >= upgrade.price) {
+      points -= upgrade.price;
+      towerSelected.properties = {
+        ...towerSelected.properties,
+        ...upgrade.payload,
+      };
+      towerSelected.properties.paths[pKey] += 1;
+    }
+
+    //console.log(pathLetter + (currentUpgrade + 1));
+    // console.log(towerSelected.properties.paths[pathLetter]);
   }
 
   //? Listen and set mouse position state. Passed to a canvas event listener for mousemove.
@@ -769,8 +817,8 @@
   {#if !playing}
     <div id="prepareGame">
       <button style="color: red;" on:click={() => startGame("medium")}>
-        Start Game</button
-      >
+        Start Game
+      </button>
     </div>
   {:else}
     <div id="overlay">
@@ -786,7 +834,8 @@
         Wave:
         <span class="ml-1" id="waveEl">{currentWave}</span>
       </p>
-      <div class="buttonGroup">
+
+      <div id="mainButtons">
         <button disabled={hero} on:click={() => handleHeroSelect("point")}>
           Select Point Shooter Hero
         </button>
@@ -797,30 +846,44 @@
         <button on:click={() => handleTowerSelect("auto")}
           >Select Auto Shooter</button
         >
+        <button
+          style="grid-column-start: 1; grid-column-end: 3;"
+          on:click={() => startWave()}
+        >
+          Start Wave
+        </button>
       </div>
-      <button on:click={() => startWave()}> Start Wave </button>
-      <div id="towerControls" class="towerButtons">
-        <div id="currentTowers" style="display: flex; flex-direction: column">
-          <p>Current Towers:</p>
 
-          {#if towers.length > 0}
-            {#each towers as t, i}
-              <button on:click={() => towerButtonClicked(i)}>
-                tower {towers.length}
-                {t.properties.fireMode}
-              </button>
-            {/each}
-          {/if}
+      <div id="currentTowers">
+        <div class="flex-col" style="gap: 0;">
+          <p>Current Towers:</p>
+          <div class="flex-col">
+            {#if towers.length > 0}
+              {#each towers as t, i}
+                <button on:click={() => towerButtonClicked(i)}>
+                  tower {i + 1}:
+                  {t.properties.fireMode}
+                </button>
+              {/each}
+            {/if}
+          </div>
         </div>
-        <div style="display: flex; flex-direction: column">
+        <div class="flex-col" style="gap: 0;">
           <p>Upgrades:</p>
-          <div
-            id="towerUpgradeButtons"
-            style="display: flex; flex-direction: column; max-width: 200px"
-          >
+          <div class="flex-col">
             {#if towerSelecting}
-              {#each pathKeys as pKey}
-                <button>{pKey}</button>
+              {#each upgradeButtons as el, i}
+                {#if el}
+                  <button
+                    style=""
+                    data-tooltip={el.desc}
+                    on:click={() => upgradeButtonClicked(pathKeys[i])}
+                  >
+                    {el.name} | {el.price}
+                  </button>
+                {:else}
+                  <button style="" disabled> Path Complete </button>
+                {/if}
               {/each}
             {/if}
           </div>
@@ -838,6 +901,11 @@
     height: 100%;
     overflow: hidden;
     background-color: rgb(17, 34, 17);
+  }
+  .flex-col {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
   }
   #prepareGame {
     position: absolute;
@@ -863,7 +931,7 @@
     z-index: 99;
     color: var(--primary-color);
     background-color: #d6d6d6;
-    font-size: 32px;
+    font-size: 26px;
     border-radius: 0.75rem;
     user-select: none;
     /*cant figure out why it creates a pointer */
@@ -874,20 +942,21 @@
     display: inline-block;
   }
 
-  #overlay .buttonGroup {
+  #overlay #mainButtons {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 12px;
     margin-top: 0.5rem;
-    font-size: 22px;
+    font-size: 20px;
   }
-  #overlay .towerButtons {
+  #overlay #currentTowers {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 12px;
-    margin-top: 0.5rem;
-    font-size: 16px;
+    margin-top: 1rem;
+    font-size: 12px;
   }
+
   #overlay button {
     width: 100%;
     color: white;
@@ -907,10 +976,6 @@
     background: #320000;
     border-radius: 0.25rem;
     box-shadow: 0px 0px 6px var(--primary-color);
-  }
-
-  #overlay button:active {
-    transform: scale(0.9);
   }
 
   #overlay button:disabled {
